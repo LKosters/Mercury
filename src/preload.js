@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('mailApi', {
   saveAttachment: (accountId, folderPath, uid, index) =>
     invoke('mail:saveAttachment', accountId, folderPath, uid, index),
   searchMessages: (accountId, folderPath, query) => invoke('mail:search', accountId, folderPath, query),
+  searchAllMessages: (accountId, query) => invoke('mail:searchAll', accountId, query),
   reactiveMessages: (accountId, folderId) => invoke('mail:reactive', accountId, folderId),
   reactiveList: (accountId) => invoke('reactive:list', accountId),
   reactiveCreate: (name, accountId) => invoke('reactive:create', name, accountId),
@@ -34,6 +35,13 @@ contextBridge.exposeInMainWorld('mailApi', {
   syncNow: (accountId) => invoke('sync:now', accountId),
   mailStats: (accountId) => invoke('mail:stats', accountId),
   reactiveCounts: (accountId) => invoke('reactive:counts', accountId),
+  getPrefs: () => invoke('settings:getPrefs'),
+  setPrefs: (patch) => invoke('settings:setPrefs', patch),
+  settingsInfo: () => invoke('settings:info'),
+  revealDataDir: () => invoke('settings:revealData'),
+  rebuildIndex: () => invoke('settings:rebuildIndex'),
+  exportBackup: () => invoke('settings:export'),
+  importBackup: () => invoke('settings:import'),
   onSyncEvent: (callback) => {
     ipcRenderer.on('sync:event', (_event, data) => callback(data));
   },

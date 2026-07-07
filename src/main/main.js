@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const accounts = require('./accounts');
 const sync = require('./sync');
+const settings = require('./settings');
 const { registerIpc, DEBUG } = require('./ipc');
 
 // NOTE: the internal app name stays "email-app" — Electron's safeStorage
@@ -97,9 +98,17 @@ function syncAll() {
   for (const account of accounts.listAccounts()) runSync(account.id);
 }
 
+// Background index sync on a user-configurable interval (settings.json).
+let syncTimer = null;
+function rescheduleSync() {
+  if (syncTimer) clearInterval(syncTimer);
+  const minutes = settings.get().syncIntervalMinutes || 5;
+  syncTimer = setInterval(syncAll, minutes * 60 * 1000);
+}
+
 /* ---------- Lifecycle ---------- */
 
-registerIpc({ getWindow: () => win, runSync });
+registerIpc({ getWindow: () => win, runSync, syncAll, rescheduleSync });
 
 app.whenReady().then(() => {
   if (process.platform === 'darwin') {
@@ -111,9 +120,10 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 
-  // Background index sync: shortly after launch, then every 5 minutes.
+  // Background index sync: shortly after launch, then on the configured
+  // interval (default 5 minutes; changeable in Settings).
   setTimeout(syncAll, 2000);
-  setInterval(syncAll, 5 * 60 * 1000);
+  rescheduleSync();
 });
 
 app.on('window-all-closed', () => {

@@ -25,7 +25,13 @@ export function renderReader() {
     return;
   }
   $('reader-empty').classList.add('hidden');
-  $('reader').classList.remove('hidden');
+  const reader = $('reader');
+  reader.classList.remove('hidden');
+  // Restart the header entrance animation for each opened message: drop the
+  // class, force a reflow so the browser sees the removal, then re-add it.
+  reader.classList.remove('reader-enter');
+  void reader.offsetWidth;
+  reader.classList.add('reader-enter');
 
   $('reader-subject').textContent = msg.subject;
   const avatar = $('reader-avatar');

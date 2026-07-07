@@ -117,6 +117,14 @@ function deleteAccount(accountId) {
   d.prepare('DELETE FROM folder_state WHERE account_id = ?').run(accountId);
 }
 
+// Drop the whole index so the next sync rebuilds it from scratch. The index is
+// disposable (it resyncs), unlike the JSON stores.
+function resetIndex() {
+  const d = init();
+  d.prepare('DELETE FROM messages').run();
+  d.prepare('DELETE FROM folder_state').run();
+}
+
 function listMessages(accountId, folder, limit = 200, offset = 0) {
   const d = init();
   const total = d
@@ -165,6 +173,32 @@ function searchMessages(accountId, folder, query, limit = 500) {
     )
     .all(accountId, folder, like, like, like, like, limit);
   return rows.map(toMessage);
+}
+
+// Global search across every folder of an account (for the title bar search).
+// Deduped by Message-ID like reactiveMessages, since the same mail is often
+// indexed in several mailboxes (e.g. Gmail INBOX + All Mail).
+function searchAll(accountId, query, limit = 500) {
+  const d = init();
+  const like = `%${query.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const rows = d
+    .prepare(
+      `SELECT * FROM messages WHERE account_id = ? AND (
+         subject LIKE ? ESCAPE '\\' OR from_name LIKE ? ESCAPE '\\' OR
+         from_address LIKE ? ESCAPE '\\' OR recipients LIKE ? ESCAPE '\\'
+       ) ORDER BY date DESC LIMIT ?`
+    )
+    .all(accountId, like, like, like, like, limit * 3);
+  const seen = new Set();
+  const result = [];
+  for (const row of rows) {
+    const key = row.message_id || `${row.folder}:${row.uid}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(toMessage(row));
+    if (result.length >= limit) break;
+  }
+  return result;
 }
 
 function markSeen(accountId, folder, uid) {
@@ -227,9 +261,11 @@ module.exports = {
   pruneFolder,
   clearFolder,
   deleteAccount,
+  resetIndex,
   listMessages,
   reactiveMessages,
   searchMessages,
+  searchAll,
   markSeen,
   deleteMessage,
   stats,

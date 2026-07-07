@@ -13,6 +13,8 @@ import './search.js';
 import './composer.js';
 import './sync.js';
 import './status.js';
+import './titlebar.js';
+import './settings.js';
 
 $('refresh-btn').addEventListener('click', () => {
   if (!state.accountId) return;
@@ -27,14 +29,15 @@ $('refresh-btn').addEventListener('click', () => {
 document.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
     e.preventDefault();
-    $('search-input').focus();
-    $('search-input').select();
+    $('global-search').focus();
+    $('global-search').select();
     return;
   }
   if (e.key === 'Escape') {
     $('account-modal').classList.add('hidden');
     $('reactive-modal').classList.add('hidden');
     $('manage-modal').classList.add('hidden');
+    $('settings-modal').classList.add('hidden');
     closeTagMenu();
     if (!$('composer').classList.contains('hidden')) $('composer').classList.add('minimized');
   }

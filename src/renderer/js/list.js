@@ -132,8 +132,18 @@ export function isInboxSelected() {
   return folder ? folder.specialUse === '\\Inbox' : false;
 }
 
+// Selecting any normal view supersedes an active title-bar global search —
+// drop the flag (and its search box) so background refreshes resume.
+function exitGlobalSearch() {
+  if (!state.globalSearch) return;
+  state.globalSearch = false;
+  $('global-search').value = '';
+  $('global-search-clear').classList.add('hidden');
+}
+
 // Shared loader for non-paginated views (reactive folders).
 export async function withListLoading(fn, quiet = false) {
+  exitGlobalSearch();
   const btn = $('refresh-btn');
   state.hasMore = false; // reactive/done views are not paginated
   if (!quiet) {
@@ -178,6 +188,7 @@ function updateListCount(count) {
 // quiet = refresh in place (used when a background sync finishes) without
 // flashing a loading placeholder.
 export async function loadMessages(quiet = false) {
+  exitGlobalSearch();
   const btn = $('refresh-btn');
   if (!quiet) {
     btn.classList.add('spinning');

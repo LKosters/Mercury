@@ -17,6 +17,7 @@ export const state = {
   reactiveCounts: {}, // reactive folder id -> message count
   messages: [],
   baseMessages: [], // unfiltered list backing the current view (for clearing search)
+  globalSearch: false, // title-bar search is showing account-wide results
   listOffset: 0, // server-side offset of the next page
   hasMore: false, // more pages available in the current folder
   message: null, // currently open message

@@ -4,7 +4,12 @@
   "description": "Mercury — a fast, glassy desktop email client for Gmail and custom IMAP/SMTP servers",
   "main": "src/main/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "rebuild": "npx @electron/rebuild",
+    "build": "npx electron-builder --mac",
+    "build:win": "npx electron-builder --win",
+    "build:linux": "npx electron-builder --linux",
+    "build:all": "npx electron-builder --mac --win --linux"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
@@ -14,6 +19,48 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^4.1.0",
-    "electron": "^34.0.0"
+    "electron": "^34.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.mercury.app",
+    "productName": "Mercury",
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.png",
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "category": "Office"
+    }
   }
 }

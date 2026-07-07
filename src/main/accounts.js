@@ -79,4 +79,48 @@ function buildTransient(input) {
   };
 }
 
-module.exports = { listAccounts, addAccount, removeAccount, getAccount, buildTransient };
+// Full accounts including decrypted passwords, for the backup/export bundle.
+// NOTE: passwords come out as plaintext — safeStorage encryption is keyed to
+// this machine's Keychain, so an exported blob must be portable to another
+// machine. The renderer warns the user before writing the file.
+function exportAccounts() {
+  return load().map((entry) => ({ ...toPublic(entry), password: decryptPassword(entry) }));
+}
+
+// Merge accounts from a backup bundle, re-encrypting each password on this
+// machine. Existing ids are updated in place (so reactive folders keyed by
+// accountId keep matching); unknown ids are added.
+function importAccounts(list) {
+  if (!Array.isArray(list)) return { added: 0, updated: 0 };
+  const existing = load();
+  const byId = new Map(existing.map((e) => [e.id, e]));
+  let added = 0;
+  let updated = 0;
+  for (const a of list) {
+    if (!a || !a.email || !a.imap || !a.smtp) continue;
+    const entry = {
+      id: a.id || crypto.randomUUID(),
+      name: a.name || a.email,
+      email: a.email,
+      user: a.user || a.email,
+      imap: { host: a.imap.host, port: Number(a.imap.port), secure: !!a.imap.secure },
+      smtp: { host: a.smtp.host, port: Number(a.smtp.port), secure: !!a.smtp.secure },
+      ...encryptPassword(a.password || ''),
+    };
+    if (byId.has(entry.id)) updated++;
+    else added++;
+    byId.set(entry.id, entry);
+  }
+  save([...byId.values()]);
+  return { added, updated };
+}
+
+module.exports = {
+  listAccounts,
+  addAccount,
+  removeAccount,
+  getAccount,
+  buildTransient,
+  exportAccounts,
+  importAccounts,
+};

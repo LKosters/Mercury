@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: http:; font-src data: https: http:; frame-src 'self' data: blob:" />
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: http:; font-src 'self' data: https: http:; frame-src 'self' data: blob:" />
   <title>Mercury</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -14,20 +14,38 @@
     <div class="traffic-space"></div>
     <div class="brand">
       <span class="brand-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M8.2 3.6a4.4 4.4 0 0 0 7.6 0" />
-          <circle cx="12" cy="11" r="4.6" />
-          <path d="M12 15.6V21M9.5 18.5h5" />
-        </svg>
+        <img src="../../assets/planet.png" alt="Mercury" />
       </span>
       <span class="brand-name">Mercury</span>
     </div>
+
+    <!-- Global search across every folder of the current account -->
+    <div class="titlebar-search-wrap">
+      <div class="search-bar titlebar-search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="text" id="global-search" placeholder="Search all mail" />
+        <button class="icon-btn hidden" id="global-search-clear" title="Clear search">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+        </button>
+        <span class="kbd">&#8984;F</span>
+      </div>
+    </div>
+
     <div class="titlebar-actions">
+      <div class="sync-pill" id="sync-pill" title="Background sync status">
+        <span class="sync-pill-dot"></span>
+        <span id="sync-pill-text">Idle</span>
+      </div>
+      <button class="icon-btn" id="titlebar-compose" title="New message">
+        <svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
       <button class="icon-btn" id="refresh-btn" title="Sync now">
         <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+      <button class="icon-btn" id="settings-btn" title="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="2" fill="none"/><path d="M19.4 13a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9.1a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9.1a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
-    <div class="titlebar-spacer"></div>
   </header>
 
   <div id="app" class="app">
@@ -86,7 +104,6 @@
         <button class="icon-btn hidden" id="search-clear" title="Clear search">
           <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
         </button>
-        <span class="kbd">&#8984;F</span>
       </div>
       <div id="message-list" class="message-list">
         <div class="empty-hint">Add an account to get started</div>
@@ -215,6 +232,70 @@
           <button type="submit" class="primary-btn" id="account-save">Add account</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Settings modal -->
+  <div class="modal-backdrop hidden" id="settings-modal">
+    <div class="modal settings-panel">
+      <div class="settings-head">
+        <h2>Settings</h2>
+        <button class="icon-btn" id="settings-close" title="Close">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+        </button>
+      </div>
+
+      <!-- Accounts -->
+      <section class="settings-section">
+        <div class="settings-section-head">
+          <h3>Accounts</h3>
+          <button class="ghost-btn small" id="settings-add-account">Add account</button>
+        </div>
+        <div id="settings-account-list" class="settings-account-list"></div>
+      </section>
+
+      <!-- Backup -->
+      <section class="settings-section">
+        <div class="settings-section-head"><h3>Backup &amp; restore</h3></div>
+        <p class="settings-note">
+          Export your accounts, reactive folders and done-state to a single file.
+          <strong>The file stores account passwords in plain text</strong> — keep it somewhere safe.
+        </p>
+        <div class="settings-row">
+          <button class="ghost-btn" id="settings-export">Export backup…</button>
+          <button class="ghost-btn" id="settings-import">Import backup…</button>
+        </div>
+      </section>
+
+      <!-- Sync -->
+      <section class="settings-section">
+        <div class="settings-section-head"><h3>Sync</h3></div>
+        <div class="settings-field">
+          <label for="settings-interval">Check for new mail every</label>
+          <div class="settings-inline">
+            <input type="number" id="settings-interval" min="1" max="1440" step="1" />
+            <span class="settings-unit">minutes</span>
+            <button class="ghost-btn small" id="settings-interval-save">Save</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <button class="ghost-btn" id="settings-sync-all">Sync all accounts now</button>
+        </div>
+      </section>
+
+      <!-- About / data -->
+      <section class="settings-section">
+        <div class="settings-section-head"><h3>About</h3></div>
+        <dl class="settings-about">
+          <dt>Version</dt><dd id="settings-version">—</dd>
+          <dt>Data folder</dt><dd id="settings-datadir" class="settings-path">—</dd>
+        </dl>
+        <div class="settings-row">
+          <button class="ghost-btn" id="settings-reveal">Reveal data folder</button>
+          <button class="ghost-btn" id="settings-rebuild">Rebuild mail index</button>
+        </div>
+        <p class="settings-note">Rebuilding clears the local search index and re-downloads it from your servers. Your accounts, reactive folders and done-state are untouched.</p>
+      </section>
     </div>
   </div>
 

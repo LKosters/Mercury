@@ -50,13 +50,17 @@ export function escapeHtml(str) {
   return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-let toastTimer;
+let toastTimer, toastHideTimer;
 export function toast(message, kind = '') {
   const el = $('toast');
-  el.textContent = message;
-  el.className = `toast ${kind}`;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.add('hidden'), 4000);
+  clearTimeout(toastHideTimer);
+  el.textContent = message;
+  el.className = `toast ${kind}`; // clears .hidden/.leaving and replays the enter animation
+  toastTimer = setTimeout(() => {
+    el.classList.add('leaving'); // slide+fade out, then hide once it finishes
+    toastHideTimer = setTimeout(() => el.classList.add('hidden'), 220);
+  }, 4000);
 }
 
 /* ---------- Icons ---------- */

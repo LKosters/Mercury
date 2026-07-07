@@ -32,6 +32,9 @@ A local SQLite database (`better-sqlite3`) holding the envelope of every message
 
 ## Change log
 
+### 2026-07-07 — db.searchAll + resetIndex; configurable sync interval
+**Changes:** `db.searchAll(accountId, query)` — global search across all folders of an account, deduped by Message-ID (backs the new title-bar search via `mail:searchAll`). `db.resetIndex()` — drops all `messages` + `folder_state` rows so the next sync rebuilds from scratch (backs Settings → "Rebuild mail index"). The 5-min background-sync `setInterval` moved behind `main.js rescheduleSync()`, reading `syncIntervalMinutes` from the new `settings.json` prefs store so the interval is user-configurable. See [settings.md](settings.md).
+
 ### 2026-07-07 — Initial doc
 **Goal:** replace live-IMAP listing (slow, capped at 50) with a local index after the user hit a 23k-message inbox.
 **Changes:** added db.js/sync.js/scheduler; `mail:messages|search|reactive` handlers switched to DB; preload gained `syncNow`/`onSyncEvent`.

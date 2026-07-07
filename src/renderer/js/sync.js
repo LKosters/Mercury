@@ -39,6 +39,7 @@ api.onSyncEvent((ev) => {
 
   if (ev.type === 'folder-done') {
     updateStats();
+    if (state.globalSearch) return; // don't disturb title-bar global search results
     if ($('search-input').value.trim()) return; // don't disturb search results
     // Refresh the visible list when its data just changed — but only if the
     // user is at the top, so we never yank the list out from under them.

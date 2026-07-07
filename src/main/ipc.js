@@ -1,10 +1,14 @@
-const { ipcMain, dialog } = require('electron');
+const { ipcMain, dialog, shell, app } = require('electron');
 const fs = require('fs');
+const path = require('path');
 const accounts = require('./accounts');
 const mail = require('./mail');
 const reactive = require('./reactive');
 const done = require('./done');
 const db = require('./db');
+const settings = require('./settings');
+
+const BACKUP_VERSION = 1;
 
 const DEBUG = process.env.MAIL_DEBUG === '1';
 
@@ -23,8 +27,10 @@ function handle(channel, fn) {
 }
 
 // getWindow: () => BrowserWindow — for dialogs.
-// runSync: (accountId) => void — kicks a background index sync.
-function registerIpc({ getWindow, runSync }) {
+// runSync: (accountId) => void — kicks a background index sync of one account.
+// syncAll: () => void — kicks a background sync of every account.
+// rescheduleSync: () => void — re-reads the sync interval and reschedules.
+function registerIpc({ getWindow, runSync, syncAll, rescheduleSync }) {
   /* Accounts */
   handle('accounts:list', () => accounts.listAccounts());
   handle('accounts:add', (input) => {
@@ -58,6 +64,8 @@ function registerIpc({ getWindow, runSync }) {
   handle('mail:search', (accountId, folderPath, query) =>
     db.searchMessages(accountId, folderPath, query)
   );
+
+  handle('mail:searchAll', (accountId, query) => db.searchAll(accountId, query));
 
   handle('mail:reactive', (accountId, folderId) =>
     db.reactiveMessages(accountId, reactive.get(folderId).senders)
@@ -108,6 +116,86 @@ function registerIpc({ getWindow, runSync }) {
   handle('done:list', (accountId) => done.list(accountId));
   handle('done:add', (record) => done.add(record));
   handle('done:remove', (accountId, messageId) => done.remove(accountId, messageId));
+
+  /* Settings & preferences */
+  handle('settings:getPrefs', () => settings.get());
+  handle('settings:setPrefs', (patch) => {
+    const next = settings.set(patch);
+    rescheduleSync(); // pick up a changed sync interval immediately
+    return next;
+  });
+
+  handle('settings:info', () => ({
+    version: app.getVersion(),
+    dataDir: app.getPath('userData'),
+    accounts: accounts.listAccounts().length,
+  }));
+
+  handle('settings:revealData', async () => {
+    await shell.openPath(app.getPath('userData'));
+    return true;
+  });
+
+  handle('settings:rebuildIndex', () => {
+    db.resetIndex();
+    syncAll(); // fire-and-forget; progress streams to the renderer as usual
+    return true;
+  });
+
+  /* Backup: export/import accounts + reactive folders + done state. The bundle
+   * contains DECRYPTED account passwords (safeStorage is machine-bound, so the
+   * file has to be portable) — the renderer warns before writing it. */
+  handle('settings:export', async () => {
+    const bundle = {
+      app: 'Mercury',
+      version: BACKUP_VERSION,
+      exportedAt: new Date().toISOString(),
+      accounts: accounts.exportAccounts(),
+      reactiveFolders: reactive.exportAll(),
+      done: done.exportAll(),
+    };
+    const stamp = new Date().toISOString().slice(0, 10);
+    const { canceled, filePath } = await dialog.showSaveDialog(getWindow(), {
+      title: 'Export Mercury backup',
+      defaultPath: path.join(app.getPath('downloads'), `mercury-backup-${stamp}.json`),
+      filters: [{ name: 'Mercury backup', extensions: ['json'] }],
+    });
+    if (canceled || !filePath) return null;
+    fs.writeFileSync(filePath, JSON.stringify(bundle, null, 2));
+    return {
+      path: filePath,
+      accounts: bundle.accounts.length,
+      reactiveFolders: bundle.reactiveFolders.length,
+      done: bundle.done.length,
+    };
+  });
+
+  handle('settings:import', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(getWindow(), {
+      title: 'Import Mercury backup',
+      properties: ['openFile'],
+      filters: [{ name: 'Mercury backup', extensions: ['json'] }],
+    });
+    if (canceled || !filePaths.length) return null;
+    let bundle;
+    try {
+      bundle = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'));
+    } catch {
+      throw new Error('That file is not a valid Mercury backup.');
+    }
+    if (!bundle || (!bundle.accounts && !bundle.reactiveFolders && !bundle.done)) {
+      throw new Error('That file does not look like a Mercury backup.');
+    }
+    const accountResult = accounts.importAccounts(bundle.accounts || []);
+    const reactiveCount = reactive.importAll(bundle.reactiveFolders || []);
+    const doneCount = done.importAll(bundle.done || []);
+    syncAll(); // index any newly imported accounts
+    return {
+      accounts: accountResult,
+      reactiveFolders: reactiveCount,
+      done: doneCount,
+    };
+  });
 }
 
 module.exports = { registerIpc, DEBUG };

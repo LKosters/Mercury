@@ -21,6 +21,12 @@ The pill search bar lives inside the message-list pane, directly above the All/U
 
 ## Change log
 
+### 2026-07-07 — Added a title-bar global search (alongside the list search)
+**Goal:** search across every folder of the account, not just the open one.
+**Changes:** new `#global-search` field in the title bar (`titlebar.js`), backed by `db.searchAll(accountId, query)` (all folders, deduped by Message-ID like reactive) via `mail:searchAll` IPC + `searchAllMessages` preload. Enter runs it; results carry their `folder` so click-through opens correctly (reader uses `item.folder`). ⌘F now focuses this global field (was the list-pane `#search-input`); the list search stays for per-folder filtering ("Search this folder"). New `state.globalSearch` flag guards `sync.js` and is reset by `list.js` (`exitGlobalSearch` in `loadMessages`/`withListLoading`) so navigating to a folder supersedes the search and background refresh resumes. Removed the list search's now-wrong ⌘F hint.
+**Result:** two search scopes — title bar = all mail, list = this folder.
+**Not done:** search is per-account (current account only), not across all accounts at once.
+
 ### 2026-07-07 — Moved search into the list pane
 **Goal:** search should read as belonging to the inbox list, not the app title bar.
 **Changes:** relocated the `.search-bar` element out of `.titlebar` into `.message-list-pane`, above the `#segmented` filter; full-width via `.message-list-pane .search-bar` override (`width:auto; margin:0 20px 10px`). Placeholder now "Search this folder". IDs (`search-input`/`search-clear`) unchanged, so search.js, the ⌘F handler (app.js), and the loadMore/sync guards keep working untouched.

@@ -107,4 +107,41 @@ function setHidden(id, hidden) {
   return folder;
 }
 
-module.exports = { list, get, create, remove, addSender, removeSender, setHidden, rename };
+// All reactive folders (every account) for the backup bundle.
+function exportAll() {
+  return load();
+}
+
+// Merge reactive folders from a backup, upserting by id.
+function importAll(incoming) {
+  if (!Array.isArray(incoming)) return 0;
+  const byId = new Map(load().map((f) => [f.id, f]));
+  let count = 0;
+  for (const f of incoming) {
+    if (!f || !f.id || !f.name) continue;
+    byId.set(f.id, {
+      id: f.id,
+      name: f.name,
+      accountId: f.accountId || null,
+      color: f.color || COLORS[0],
+      senders: Array.isArray(f.senders) ? f.senders.map((s) => String(s).toLowerCase()) : [],
+      hideFromInbox: !!f.hideFromInbox,
+    });
+    count++;
+  }
+  save([...byId.values()]);
+  return count;
+}
+
+module.exports = {
+  list,
+  get,
+  create,
+  remove,
+  addSender,
+  removeSender,
+  setHidden,
+  rename,
+  exportAll,
+  importAll,
+};
