@@ -15,6 +15,7 @@ import './sync.js';
 import './status.js';
 import './titlebar.js';
 import { applyUpdateResult } from './settings.js';
+import './onboarding.js';
 import { hidePreloader } from './preloader.js';
 
 $('refresh-btn').addEventListener('click', () => {

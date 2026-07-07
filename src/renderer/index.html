@@ -22,6 +22,27 @@
     </div>
   </div>
 
+  <!-- First-run onboarding overlay. Shown by js/onboarding.js while the app has
+       no accounts; offers adding an account or restoring a backup. -->
+  <div id="welcome" class="welcome hidden">
+    <div class="welcome-card">
+      <div class="planet-wrap">
+        <span class="planet-glow"></span>
+        <img class="welcome-planet" src="../../assets/planet.png" alt="" />
+      </div>
+      <h1 class="welcome-title">Welcome to Mercury</h1>
+      <p class="welcome-sub">
+        A fast, glassy desktop client for Gmail and any IMAP/SMTP mailbox.
+        Add your first account to get started — or restore a backup from another machine.
+      </p>
+      <div class="welcome-actions">
+        <button class="primary-btn welcome-btn" id="welcome-add">Add an account</button>
+        <button class="ghost-btn welcome-btn" id="welcome-import">Import a backup…</button>
+      </div>
+      <p class="welcome-foot">Your accounts, mail index and settings stay on this device.</p>
+    </div>
+  </div>
+
   <!-- Title bar -->
   <header class="titlebar">
     <div class="traffic-space"></div>

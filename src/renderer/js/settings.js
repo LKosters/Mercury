@@ -98,10 +98,12 @@ $('settings-export').addEventListener('click', async () => {
   }
 });
 
-$('settings-import').addEventListener('click', async () => {
+// Shared by the Settings "Import" button and the first-run welcome screen.
+// Returns true if a backup was actually imported (false if the user cancelled).
+export async function runImport() {
   try {
     const res = await api.importBackup();
-    if (!res) return; // cancelled
+    if (!res) return false; // cancelled
     const { added, updated } = res.accounts;
     toast(
       `Imported ${added} new + ${updated} updated account${added + updated === 1 ? '' : 's'}, ` +
@@ -109,10 +111,14 @@ $('settings-import').addEventListener('click', async () => {
       'success'
     );
     await reloadAfterImport();
+    return true;
   } catch (err) {
     toast(err.message, 'error');
+    return false;
   }
-});
+}
+
+$('settings-import').addEventListener('click', runImport);
 
 async function reloadAfterImport() {
   state.accounts = await api.listAccounts();

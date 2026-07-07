@@ -45,6 +45,9 @@ export function renderAccounts() {
     btn.addEventListener('click', () => selectAccount(account.id));
     list.appendChild(btn);
   }
+  // Single chokepoint for account-list changes — onboarding.js listens to toggle
+  // the first-run welcome screen.
+  window.dispatchEvent(new Event('accounts-changed'));
 }
 
 // The "Static" section above Folders: the plain Inbox and a Complete Inbox that

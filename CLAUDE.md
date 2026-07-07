@@ -28,6 +28,7 @@ There are no tests and no linter. Verify changes by running the app.
 | [docs/search.md](docs/search.md) | Search bar and index queries |
 | [docs/design.md](docs/design.md) | styles.css, window options, theming, branding, title bar |
 | [docs/settings.md](docs/settings.md) | Settings modal, backup import/export, sync interval, rebuild index |
+| [docs/onboarding.md](docs/onboarding.md) | First-run welcome screen, zero-account state, import-from-welcome |
 | [docs/release.md](docs/release.md) | Packaging, installers, electron-builder, GitHub release workflow |
 
 **After changing a feature, append a dated entry to its doc's Change log** (newest first; keep prior entries) and update the top sections only if now stale. New feature → new `docs/<feature>.md` following the same skeleton + a row in the table above.

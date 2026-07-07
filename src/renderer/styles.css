@@ -1147,6 +1147,62 @@ input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px
   to   { transform: translateX(330%); }
 }
 
+/* ============ First-run onboarding ============ */
+
+.welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 1900;                          /* above the app, below the preloader (2000) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: radial-gradient(125% 125% at 50% 38%, #2c2129 0%, var(--bg) 62%);
+  -webkit-app-region: drag;               /* keep the window draggable */
+  animation: fadeIn var(--dur-slow) var(--ease);
+}
+.welcome-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 440px;
+  gap: 18px;
+}
+.welcome .planet-wrap { width: 116px; height: 116px; }
+.welcome .planet-glow { width: 116px; height: 116px; }
+.welcome-planet {
+  position: relative;
+  width: 92px; height: 92px;
+  border-radius: 50%;
+  object-fit: cover;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55));
+  animation: planetFloat 4s ease-in-out infinite;
+}
+.welcome-title {
+  font-family: var(--font-pixel);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+.welcome-sub {
+  color: var(--text-dim);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.welcome-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  -webkit-app-region: no-drag;
+}
+.welcome-btn { padding: 11px 22px; font-size: 14px; }
+.welcome-foot {
+  color: var(--text-faint);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
 /* Respect the OS "reduce motion" setting — kill all transitions & animations. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
