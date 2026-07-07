@@ -30,7 +30,14 @@ Locally: `npm run build` (mac), `build:win`, `build:linux`, or `build:all`. Outp
 - **Builds are unsigned** (`CSC_IDENTITY_AUTO_DISCOVERY: false`, mac `identity: null`). Users must right-click→Open on macOS and dismiss SmartScreen on Windows. No Apple Developer / code-signing certs are wired up yet.
 - The `files` glob must include `assets/**/*` — the dock icon (`main.js`) and sidebar planet image (renderer) are loaded from `assets/` at runtime.
 
+## Auto-update
+
+The packaged app self-updates from these GitHub Releases (no electron-updater / code-signing). `src/main/updater.js` polls `GET /repos/LKosters/Mercury/releases/latest`, compares `tag_name` against `app.getVersion()`, and — if newer — offers the platform asset (`.dmg` / `.exe` / `.AppImage`) for one-click download+install. See [settings.md](settings.md) for the UI. Because the updater matches assets by extension, **release asset names must keep those extensions** — don't switch Windows to a `.msi` or Linux to `.deb`/`.rpm` without updating `platformAssetPattern()` in `updater.js`. The repo must be public (or the API needs auth) for the check to work.
+
 ## Change log
+
+### 2026-07-07 — Auto-update (GitHub Releases)
+**Changes:** added `src/main/updater.js` (check latest release, version-compare, download matching asset with progress, install: strip-quarantine+open DMG / run NSIS / chmod+launch AppImage), `updater:*` IPC, preload bridge, and a Settings → Updates panel + gear badge + startup auto-check. Ported from Lithium. Verified: boots clean, `updater:check` reaches the GitHub API (404 "no releases yet" until the first tag is pushed).
 
 ### 2026-07-07 — Initial release pipeline
 **Changes:** added electron-builder `build` config + `build`/`build:win`/`build:linux`/`build:all` scripts to `package.json`; added `.github/workflows/release.yml` (tag `v*` → matrix build → GitHub Release), adapted from the Lithium project's workflow. Targets: dmg / nsis (x64) / AppImage (x64). `productName` kept under `build` only to preserve the `email-app` Keychain identity (hard rule #1).

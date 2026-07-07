@@ -7,6 +7,7 @@ const reactive = require('./reactive');
 const done = require('./done');
 const db = require('./db');
 const settings = require('./settings');
+const updater = require('./updater');
 
 const BACKUP_VERSION = 1;
 
@@ -196,6 +197,16 @@ function registerIpc({ getWindow, runSync, syncAll, rescheduleSync }) {
       done: doneCount,
     };
   });
+
+  /* Auto-update (GitHub Releases) */
+  handle('updater:check', () => updater.checkForUpdates());
+  handle('updater:downloadAndInstall', (payload) =>
+    updater.downloadAndInstall(payload, (percent) => {
+      const win = getWindow();
+      if (win && !win.isDestroyed()) win.webContents.send('updater:progress', percent);
+    })
+  );
+  handle('updater:openRelease', (url) => updater.openRelease(url));
 }
 
 module.exports = { registerIpc, DEBUG };

@@ -25,6 +25,9 @@ The body iframe configuration is the product of a long white-screen debugging sa
 
 ## Change log
 
+### 2026-07-07 — Body fetch moved to a dedicated IMAP connection
+**Changes:** `getMessage`/`getAttachment` now run on a separate `interactive` IMAP channel (`withImapInteractive`) instead of sharing the connection the background sync uses. Fixes inconsistent multi-second opens caused by a body fetch queuing behind an in-flight sync's mailbox lock. Details + live verification in [mail-index.md](mail-index.md) change log. No change to the iframe/parse pipeline.
+
 ### 2026-07-07 — Redesign: icon actions, filed line, dark plain-text body
 **Changes:** header rebuilt — avatar + name/address + four icon buttons (reply/tag/done/delete; done shows green when checked); new "Filed automatically into <reactive folder>" line (clickable, opens the folder); serif subject + byline "Sender · 4 July · to recipient". Plain-text messages (no HTML part) now render dark-themed inside the iframe via a conditional srcdoc style + `.dark-body` class; **HTML email still gets a white iframe — that rule stands.** Sandbox/base/recreate rules unchanged.
 

@@ -173,6 +173,76 @@ async function loadInfo() {
 
 $('settings-reveal').addEventListener('click', () => api.revealDataDir().catch(() => {}));
 
+/* ---------- Updates ---------- */
+
+let pendingUpdate = null;
+
+// Reflect a check result in the Settings UI + gear badge. Shared by the manual
+// "Check for updates" button and the automatic check on startup (app.js).
+export function applyUpdateResult(result) {
+  const status = $('settings-update-status');
+  const download = $('settings-download-update');
+  const badge = $('settings-update-badge');
+  if (result.updateAvailable && result.downloadUrl !== undefined) {
+    pendingUpdate = result;
+    status.textContent = `Mercury ${result.latestVersion} is available (you have ${result.currentVersion}).`;
+    download.textContent = result.downloadUrl ? 'Download & install' : 'View release';
+    download.disabled = false;
+    download.classList.remove('hidden');
+    badge.classList.remove('hidden');
+  } else {
+    status.textContent = `You're on the latest version (${result.currentVersion}).`;
+    download.classList.add('hidden');
+    badge.classList.add('hidden');
+  }
+}
+
+$('settings-check-update').addEventListener('click', async () => {
+  const btn = $('settings-check-update');
+  const status = $('settings-update-status');
+  btn.disabled = true;
+  const label = btn.textContent;
+  btn.textContent = 'Checking…';
+  status.textContent = 'Checking for updates…';
+  try {
+    applyUpdateResult(await api.checkForUpdates());
+  } catch (err) {
+    status.textContent = `Couldn't check for updates: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+});
+
+// Progress streams from the main process during the download.
+api.onUpdateProgress((percent) => {
+  const download = $('settings-download-update');
+  if (!download.classList.contains('hidden')) download.textContent = `Downloading ${percent}%`;
+});
+
+$('settings-download-update').addEventListener('click', async () => {
+  if (!pendingUpdate) return;
+  const download = $('settings-download-update');
+  const status = $('settings-update-status');
+  // No installer asset for this platform — open the release page instead.
+  if (!pendingUpdate.downloadUrl) {
+    api.openRelease(pendingUpdate.releaseUrl).catch(() => {});
+    return;
+  }
+  download.disabled = true;
+  download.textContent = 'Downloading…';
+  status.textContent = 'Downloading update — Mercury will restart to install.';
+  try {
+    await api.downloadUpdate({ downloadUrl: pendingUpdate.downloadUrl, assetName: pendingUpdate.assetName });
+    status.textContent = 'Installing update…';
+    download.textContent = 'Installing…';
+  } catch (err) {
+    status.textContent = `Download failed: ${err.message}`;
+    download.textContent = 'Retry';
+    download.disabled = false;
+  }
+});
+
 $('settings-rebuild').addEventListener('click', async () => {
   if (!confirm('Rebuild the local mail index? This clears the search index and re-downloads it. Your accounts and reactive folders are kept.')) return;
   try {

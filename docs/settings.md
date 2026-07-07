@@ -8,6 +8,7 @@ A Settings modal opened from the **gear button in the title bar**. It hosts four
 2. **Backup & restore** — export a single JSON bundle (accounts + reactive folders + done-state) and import it back. The bundle carries **decrypted account passwords in plain text** (safeStorage is machine-bound, so a portable backup can't stay encrypted); the UI warns about this.
 3. **Sync** — a user-configurable background-sync interval (minutes) and a "Sync all accounts now" button.
 4. **About** — app version, data-folder path, "Reveal data folder", and "Rebuild mail index".
+5. **Updates** — "Check for updates" + a "Download & install" button that appears when a newer GitHub release exists; a gear-button badge and a launch-time toast surface updates automatically. Logic lives in `src/main/updater.js` (see [release.md](release.md)); the renderer wiring is `applyUpdateResult()` in `settings.js`, reused by the startup check in `app.js`.
 
 ## Key files
 | File | Role |
@@ -32,6 +33,9 @@ A Settings modal opened from the **gear button in the title bar**. It hosts four
 - After an import, `settings.js` reloads `state.accounts` and re-selects the current account so reactive/done refresh.
 
 ## Change log
+
+### 2026-07-07 — Updates panel + auto-check
+**Changes:** added a Settings → Updates section ("Check for updates" + "Download & install" with live download %), a gear-button `.update-badge` dot, and an automatic check on launch (`app.js`) that toasts when a newer release is available. Renderer exports `applyUpdateResult()` from `settings.js`; main-process logic + IPC in `src/main/updater.js` / `ipc.js` — see [release.md](release.md).
 
 ### 2026-07-07 — Initial Settings modal + backup tool
 **Goal:** fill the empty title bar and add a settings + accounts import/export tool.

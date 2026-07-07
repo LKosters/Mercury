@@ -42,6 +42,12 @@ contextBridge.exposeInMainWorld('mailApi', {
   rebuildIndex: () => invoke('settings:rebuildIndex'),
   exportBackup: () => invoke('settings:export'),
   importBackup: () => invoke('settings:import'),
+  checkForUpdates: () => invoke('updater:check'),
+  downloadUpdate: (payload) => invoke('updater:downloadAndInstall', payload),
+  openRelease: (url) => invoke('updater:openRelease', url),
+  onUpdateProgress: (callback) => {
+    ipcRenderer.on('updater:progress', (_event, percent) => callback(percent));
+  },
   onSyncEvent: (callback) => {
     ipcRenderer.on('sync:event', (_event, data) => callback(data));
   },

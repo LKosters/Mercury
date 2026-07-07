@@ -43,6 +43,7 @@
         <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <button class="icon-btn" id="settings-btn" title="Settings">
+        <span class="update-badge hidden" id="settings-update-badge"></span>
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="2" fill="none"/><path d="M19.4 13a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9.1a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9.1a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -295,6 +296,16 @@
           <button class="ghost-btn" id="settings-rebuild">Rebuild mail index</button>
         </div>
         <p class="settings-note">Rebuilding clears the local search index and re-downloads it from your servers. Your accounts, reactive folders and done-state are untouched.</p>
+      </section>
+
+      <!-- Updates -->
+      <section class="settings-section">
+        <div class="settings-section-head"><h3>Updates</h3></div>
+        <div class="settings-row">
+          <button class="ghost-btn" id="settings-check-update">Check for updates</button>
+          <button class="ghost-btn hidden" id="settings-download-update">Download &amp; install</button>
+        </div>
+        <p class="settings-note" id="settings-update-status">Mercury checks for updates automatically at launch.</p>
       </section>
     </div>
   </div>

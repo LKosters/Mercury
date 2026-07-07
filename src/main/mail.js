@@ -13,18 +13,32 @@ function imapClient(account) {
 }
 
 /* ---------- Connection pool ----------
- * One persistent IMAP connection per account, reused across operations.
+ * Persistent IMAP connections per account, reused across operations.
  * Connecting to a server takes 1-3s (TCP + TLS + auth), so doing it per
- * operation makes every click feel slow. */
+ * operation makes every click feel slow.
+ *
+ * We keep TWO channels per account:
+ *   - 'sync'        the background indexer lives here. It holds a mailbox lock
+ *                   for the whole duration of a folder sync (seconds to minutes).
+ *   - 'interactive' user-triggered reads (open message, download attachment)
+ *                   live here so they NEVER wait behind a running sync. A single
+ *                   IMAP connection serializes all its commands, so sharing one
+ *                   connection made clicks stall for however long sync held the
+ *                   lock — the source of the "sometimes slow" inconsistency.
+ * Two connections per account is well within server limits (Gmail allows 15). */
 
-const pools = new Map(); // poolKey -> Promise<ImapFlow>
+const pools = new Map(); // `${poolKey}:${channel}` -> Promise<ImapFlow>
 
 function poolKey(account) {
   return account.id || `${account.user}@${account.imap.host}`;
 }
 
-async function getClient(account) {
-  const key = poolKey(account);
+function channelKey(account, channel) {
+  return `${poolKey(account)}:${channel}`;
+}
+
+async function getClient(account, channel) {
+  const key = channelKey(account, channel);
   const existing = pools.get(key);
   if (existing) {
     try {
@@ -55,17 +69,23 @@ async function getClient(account) {
   }
 }
 
-async function withImap(account, fn) {
-  let client = await getClient(account);
+async function withImap(account, fn, channel = 'sync') {
+  let client = await getClient(account, channel);
   try {
     return await fn(client);
   } catch (err) {
     if (client.usable) throw err; // genuine error, connection is fine
     // Connection dropped mid-operation (idle timeout, network blip) — retry once.
-    pools.delete(poolKey(account));
-    client = await getClient(account);
+    pools.delete(channelKey(account, channel));
+    client = await getClient(account, channel);
     return fn(client);
   }
+}
+
+// User-triggered reads run on the 'interactive' channel so they don't queue
+// behind the background sync's long-held mailbox lock.
+function withImapInteractive(account, fn) {
+  return withImap(account, fn, 'interactive');
 }
 
 /* ---------- Caches ---------- */
@@ -160,7 +180,7 @@ async function getMessage(account, folderPath, uid) {
   const cacheKey = `${poolKey(account)}:${folderPath}:${uid}`;
   if (msgCache.has(cacheKey)) return msgCache.get(cacheKey);
 
-  const message = await withImap(account, async (client) => {
+  const message = await withImapInteractive(account, async (client) => {
     const lock = await client.getMailboxLock(folderPath);
     try {
       const parsed = await fetchParsed(client, uid);
@@ -210,7 +230,7 @@ async function getMessage(account, folderPath, uid) {
 }
 
 async function getAttachment(account, folderPath, uid, index) {
-  return withImap(account, async (client) => {
+  return withImapInteractive(account, async (client) => {
     const lock = await client.getMailboxLock(folderPath);
     try {
       const parsed = await fetchParsed(client, uid);
@@ -227,7 +247,7 @@ async function deleteMessage(account, folderPath, uid) {
   msgCache.delete(`${poolKey(account)}:${folderPath}:${uid}`);
   const boxes = await getBoxes(account);
   const trash = boxes.find((b) => b.specialUse === '\\Trash');
-  return withImap(account, async (client) => {
+  return withImapInteractive(account, async (client) => {
     const lock = await client.getMailboxLock(folderPath);
     try {
       if (trash && trash.path !== folderPath) {

@@ -11,7 +11,7 @@ A local SQLite database (`better-sqlite3`) holding the envelope of every message
 | `src/main/db.js` | Schema, upserts, prune, list/search/reactive queries, folder sync-state |
 | `src/main/sync.js` | Per-folder sync: full first run, incremental after; emits progress events |
 | `src/main/main.js` | Sync scheduler: on launch (+2s), every 5 min, one in-flight sync per account |
-| `src/main/mail.js` | IMAP plumbing shared with sync (`withImap`, `getBoxes`, `fetchEnvelopesByUid`); per-account persistent connection pool |
+| `src/main/mail.js` | IMAP plumbing shared with sync (`withImap`, `getBoxes`, `fetchEnvelopesByUid`); per-account persistent connection pool, split into `sync` and `interactive` channels |
 | `src/renderer/js/sync.js` | Renderer: progress text in list header, quiet view refresh on `folder-done` |
 
 ## How sync works
@@ -31,6 +31,12 @@ A local SQLite database (`better-sqlite3`) holding the envelope of every message
 - One sync per account at a time (`syncing` Set in main.js) — don't remove the guard; parallel syncs deadlock on the shared connection's mailbox locks.
 
 ## Change log
+
+### 2026-07-07 — Separate IMAP connection for interactive reads (fixes inconsistent slow opens)
+**Problem:** opening a message was fast when idle but sometimes took many seconds — the "inconsistent" slowness. Cause: every account had a *single* pooled IMAP connection, and `syncFolder` holds that connection's mailbox lock for the entire duration of a folder sync (chunks of 500 envelopes + flag refresh). A single IMAP connection serializes all its commands, so a `getMessage` click that coincided with the 5-min background sync queued behind it. Coincidence with the sync window made it look random.
+**Changes:** `mail.js` connection pool is now keyed `${poolKey}:${channel}` with two channels per account. Background sync/folder listing stay on `sync`; user-triggered reads (`getMessage`, `getAttachment`, `deleteMessage`) run on a new `interactive` channel via `withImapInteractive`. `withImap(account, fn, channel='sync')` gained the channel arg. Two connections per account is well within server limits (Gmail allows 15). The "one sync per account" guard and its mailbox-lock reasoning (below) are unaffected — sync still uses one connection.
+**Result:** verified live against the real account via CDP-driven clicks — opening a message now connects a distinct `…:interactive` IMAP connection separate from `…:sync`; first open 2137ms (includes one-time TCP+TLS+auth), second open 538ms on the reused warm connection. Reads no longer wait behind an in-flight sync.
+**Not done / out of scope:** IDLE/keepalive to avoid the cold-reconnect stall after long idle; next-message prefetch + larger body cache; explicit pool teardown on account removal/quit (never existed — connections rely on process exit / server idle timeout).
 
 ### 2026-07-07 — db.searchAll + resetIndex; configurable sync interval
 **Changes:** `db.searchAll(accountId, query)` — global search across all folders of an account, deduped by Message-ID (backs the new title-bar search via `mail:searchAll`). `db.resetIndex()` — drops all `messages` + `folder_state` rows so the next sync rebuilds from scratch (backs Settings → "Rebuild mail index"). The 5-min background-sync `setInterval` moved behind `main.js rescheduleSync()`, reading `syncIntervalMinutes` from the new `settings.json` prefs store so the interval is user-configurable. See [settings.md](settings.md).
