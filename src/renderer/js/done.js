@@ -13,6 +13,7 @@ import { clearSearch } from './search.js';
 export function selectDone() {
   state.reactiveId = '__done__';
   state.folderPath = null;
+  state.completeInbox = false;
   state.message = null;
   clearSearch();
   renderFolders();
@@ -72,8 +73,8 @@ export async function toggleDone(item) {
         state.message = null;
         renderReader();
       }
-    } else if (isInboxSelected() && state.doneIds.has(item.messageId)) {
-      // Done mail leaves the inbox immediately.
+    } else if (isInboxSelected() && !state.completeInbox && state.doneIds.has(item.messageId)) {
+      // Done mail leaves the inbox immediately (but stays visible in Complete Inbox).
       state.messages = state.messages.filter((m) => !m.messageId || !state.doneIds.has(m.messageId));
       state.baseMessages = state.baseMessages.filter((m) => !m.messageId || !state.doneIds.has(m.messageId));
       removeRowByUid(item.uid);
@@ -98,7 +99,9 @@ export function updateDoneButton() {
   const msg = state.message;
   if (!msg || !msg.from) return;
   const isDone = !!msg.messageId && state.doneIds.has(msg.messageId);
-  $('done-btn').textContent = isDone ? '✓ Done' : 'Mark done';
+  const btn = $('done-btn');
+  btn.classList.toggle('checked', isDone);
+  btn.title = isDone ? 'Mark as not done' : 'Mark done';
 }
 
 $('done-btn').addEventListener('click', () => {

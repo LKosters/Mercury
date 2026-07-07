@@ -12,6 +12,7 @@ import './reader.js';
 import './search.js';
 import './composer.js';
 import './sync.js';
+import './status.js';
 
 $('refresh-btn').addEventListener('click', () => {
   if (!state.accountId) return;
@@ -21,7 +22,15 @@ $('refresh-btn').addEventListener('click', () => {
   else if (state.folderPath) loadMessages();
 });
 
+/* Global shortcuts */
+
 document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+    e.preventDefault();
+    $('search-input').focus();
+    $('search-input').select();
+    return;
+  }
   if (e.key === 'Escape') {
     $('account-modal').classList.add('hidden');
     $('reactive-modal').classList.add('hidden');

@@ -77,6 +77,14 @@ function registerIpc({ getWindow, runSync }) {
 
   handle('mail:send', (accountId, message) => mail.sendMessage(accounts.getAccount(accountId), message));
 
+  handle('mail:stats', (accountId) => db.stats(accountId));
+
+  handle('reactive:counts', (accountId) => {
+    const counts = {};
+    for (const rf of reactive.list(accountId)) counts[rf.id] = db.reactiveCount(accountId, rf.senders);
+    return counts;
+  });
+
   handle('mail:saveAttachment', async (accountId, folderPath, uid, index) => {
     const att = await mail.getAttachment(accounts.getAccount(accountId), folderPath, uid, index);
     const { canceled, filePath } = await dialog.showSaveDialog(getWindow(), {

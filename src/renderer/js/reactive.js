@@ -41,6 +41,11 @@ export function renderReactive() {
     label.textContent = rf.name;
     label.title = `${rf.senders.length} tagged sender${rf.senders.length === 1 ? '' : 's'}`;
 
+    const count = document.createElement('span');
+    count.className = 'count';
+    const n = state.reactiveCounts[rf.id];
+    if (n) count.textContent = n.toLocaleString();
+
     const gear = document.createElement('span');
     gear.className = 'gear';
     gear.title = 'Manage senders';
@@ -50,7 +55,7 @@ export function renderReactive() {
       openManageModal(rf.id);
     });
 
-    btn.append(dot, label, gear);
+    btn.append(dot, label, count, gear);
     btn.addEventListener('click', () => selectReactive(rf.id));
     list.appendChild(btn);
   }
@@ -59,6 +64,7 @@ export function renderReactive() {
 export async function selectReactive(id) {
   state.reactiveId = id;
   state.folderPath = null;
+  state.completeInbox = false;
   state.message = null;
   clearSearch();
   renderFolders();

@@ -32,6 +32,8 @@ contextBridge.exposeInMainWorld('mailApi', {
   doneAdd: (record) => invoke('done:add', record),
   doneRemove: (accountId, messageId) => invoke('done:remove', accountId, messageId),
   syncNow: (accountId) => invoke('sync:now', accountId),
+  mailStats: (accountId) => invoke('mail:stats', accountId),
+  reactiveCounts: (accountId) => invoke('reactive:counts', accountId),
   onSyncEvent: (callback) => {
     ipcRenderer.on('sync:event', (_event, data) => callback(data));
   },

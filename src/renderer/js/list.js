@@ -58,16 +58,22 @@ function buildMessageRow(msg) {
   subjectText.className = 'subject-text';
   subjectText.textContent = msg.subject;
   subject.appendChild(subjectText);
-  for (const rf of senderTags(msg.from.address)) {
-    const tag = document.createElement('span');
-    tag.className = 'mail-tag';
-    tag.textContent = rf.name;
-    tag.style.color = rf.color;
-    tag.style.background = `color-mix(in srgb, ${rf.color} 18%, transparent)`;
-    subject.appendChild(tag);
-  }
 
   btn.append(avatar, from, date, subject);
+
+  const tags = senderTags(msg.from.address);
+  if (tags.length) {
+    const tagsRow = document.createElement('div');
+    tagsRow.className = 'tags';
+    for (const rf of tags) {
+      const tag = document.createElement('span');
+      tag.className = 'mail-tag';
+      tag.textContent = rf.name;
+      tag.style.color = rf.color;
+      tagsRow.appendChild(tag);
+    }
+    btn.appendChild(tagsRow);
+  }
   btn.addEventListener('click', () => openMessage(msg));
   return btn;
 }
@@ -137,6 +143,7 @@ export async function withListLoading(fn, quiet = false) {
   try {
     state.messages = await fn();
     state.baseMessages = state.messages;
+    $('list-count').textContent = `${state.messages.length.toLocaleString()} message${state.messages.length === 1 ? '' : 's'}`;
     renderMessages();
   } catch (err) {
     $('message-list').innerHTML = `<div class="empty-hint">${escapeHtml(err.message)}</div>`;
@@ -147,13 +154,13 @@ export async function withListLoading(fn, quiet = false) {
 
 /* ---------- Pagination ---------- */
 
-// Fetch one page and apply the local inbox filters (hidden senders / done).
-// `raw` is the unfiltered count — the offset for the next page.
+// Fetch one page and apply the local inbox filters: hidden senders / done
+// (inbox only). `raw` is the unfiltered count — the offset for the next page.
 async function fetchPage(offset) {
   const res = await api.listMessages(state.accountId, state.folderPath, PAGE_SIZE, offset);
   let messages = res.messages;
   const raw = messages.length;
-  if (isInboxSelected()) {
+  if (isInboxSelected() && !state.completeInbox) {
     const hidden = hiddenSenders();
     messages = messages.filter(
       (m) =>
@@ -161,7 +168,11 @@ async function fetchPage(offset) {
         !(m.messageId && state.doneIds.has(m.messageId))
     );
   }
-  return { messages, raw, hasMore: res.hasMore };
+  return { messages, raw, hasMore: res.hasMore, total: res.total };
+}
+
+function updateListCount(count) {
+  $('list-count').textContent = `${count.toLocaleString()} message${count === 1 ? '' : 's'}`;
 }
 
 // quiet = refresh in place (used when a background sync finishes) without
@@ -182,6 +193,7 @@ export async function loadMessages(quiet = false) {
     state.baseMessages = state.messages;
     state.listOffset = page.raw;
     state.hasMore = page.hasMore;
+    updateListCount(page.total || 0);
     renderMessages();
     maybeFillViewport();
   } catch (err) {

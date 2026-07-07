@@ -29,6 +29,17 @@ An Apple "Liquid Glass" look: the window is transparent with **native macOS vibr
 
 ## Change log
 
+### 2026-07-07 — Reactive section pinned in sidebar
+**Goal:** keep the Reactive folders section always visible instead of scrolling away with long account/folder lists.
+**Changes:** moved the Reactive `.sidebar-section` out of `.sidebar-scroll` in index.html and gave it the `.sidebar-pinned` class (styles.css: `flex-shrink: 0`, `max-height: 42%`, own `overflow-y: auto`, top border). It now sits between the scroll area and the New message button. Only Accounts and Folders scroll.
+**Result:** Reactive folders (incl. the built-in Done entry) stay in view; the section itself scrolls internally if it exceeds 42% of the sidebar.
+
+### 2026-07-07 — Warm dark amber redesign (replaces Liquid Glass)
+**Goal:** match the user's reference mock exactly: flat warm-dark theme, amber accent, serif headings.
+**Changes:** vibrancy/transparency removed (solid `#1d1619` window, `trafficLightPosition` centered in a 64px custom title bar); full styles.css rewrite (new tokens: `--bg/-list/-read/-inset`, amber `--accent` with dark `--on-accent` text); title bar with brand + refresh/filter + global search (⌘F) moved out of the list pane; status bar with totals + live sync progress bar; segmented All/Unread/Reactive filter; sidebar count badges (inbox unread, reactive counts via new `mail:stats`/`reactive:counts` IPC + db `stats`/`reactiveCount`); list rows restructured (tags on their own line, square-dot chip style, amber active bar); reader header rebuilt (icon actions, "Filed automatically into <folder>" line, serif subject, byline); plain-text emails now render dark-themed in the iframe (HTML mail stays white).
+**Result:** app matches the mock's layout and palette.
+**Not done / out of scope:** "Mercury summary" AI card — CSS shipped (`.summary-card`), no markup/backend yet; needs an LLM API integration.
+
 ### 2026-07-07 — Initial doc
 **Goal:** capture the glass redesign + Mercury rebrand.
 **Changes:** native vibrancy window; rgba token system with specular edges; frosted modals/composer/menus; capsule controls; Mercury icon, wordmark, title, dock icon; data-dir migration to `.../Mercury`.

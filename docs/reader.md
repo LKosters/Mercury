@@ -25,6 +25,9 @@ The body iframe configuration is the product of a long white-screen debugging sa
 
 ## Change log
 
+### 2026-07-07 — Redesign: icon actions, filed line, dark plain-text body
+**Changes:** header rebuilt — avatar + name/address + four icon buttons (reply/tag/done/delete; done shows green when checked); new "Filed automatically into <reactive folder>" line (clickable, opens the folder); serif subject + byline "Sender · 4 July · to recipient". Plain-text messages (no HTML part) now render dark-themed inside the iframe via a conditional srcdoc style + `.dark-body` class; **HTML email still gets a white iframe — that rule stands.** Sandbox/base/recreate rules unchanged.
+
 ### 2026-07-07 — Initial doc
 **Goal:** capture the display pipeline and the white-frame fixes (verified with isolated Electron repro harnesses).
 **Changes:** per-message iframe recreation; same-origin sandbox; base-tag URL fixing; loading/error states shown in-pane instead of vanishing toasts.

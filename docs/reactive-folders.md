@@ -15,7 +15,7 @@ App-local virtual folders driven by tagged **senders**: tag a sender into a reac
 
 ## Specifics (do NOT regress)
 - Sender addresses are stored and compared **lowercased** everywhere.
-- `hideFromInbox` filtering happens renderer-side in `fetchPage` and applies **only when the inbox is selected** — other folders, search, and the reactive folders themselves always show everything.
+- `hideFromInbox` filtering happens renderer-side in `fetchPage` and applies **only when the inbox is selected** — other folders, search, the reactive folders themselves, and the Static **Complete Inbox** view (`state.completeInbox`) always show everything.
 - Every mutation that can change inbox visibility (tag, untag, toggle hide, delete folder) refreshes the inbox if it's the current view — keep those `loadMessages()` calls.
 - The reactive list in the sidebar always renders the built-in **Done** entry first (`state.reactiveId === '__done__'`, see [done.md](done.md)); it is not a real reactive folder and must stay non-deletable.
 - Per-account: `reactive.list(accountId)` also migrates legacy unowned folders by assigning them to the first account that lists — leave the migration in place.
@@ -23,6 +23,9 @@ App-local virtual folders driven by tagged **senders**: tag a sender into a reac
 - Folder color comes from a fixed palette by creation order; row chips derive their tint via `color-mix(... 18%, transparent)`.
 
 ## Change log
+
+### 2026-07-07 — Complete Inbox bypasses hide-from-inbox
+**Changes:** new Static-section "Complete Inbox" view (`state.completeInbox`, see [message-list.md](message-list.md)) selects the inbox mailbox but tells `fetchPage` to skip the hidden-sender and done filters, so reactive-hidden mail still appears there. Regular Inbox behavior is unchanged.
 
 ### 2026-07-07 — Initial doc
 **Goal:** capture the feature: user-invented "reactive folders" concept.

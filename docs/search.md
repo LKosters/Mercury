@@ -3,7 +3,7 @@
 Per-feature AI doc for **Mercury** (email-app).
 
 ## What it is
-The pill search bar above the message list. Enter runs the search; the × (or Enter on empty) restores the normal list. Folder views query the SQLite index (instant, whole folder history); reactive/Done views filter their already-loaded aggregate in memory.
+The pill search bar lives inside the message-list pane, directly above the All/Unread/Reactive segmented filter (below the folder title). Enter runs the search; the × (or Enter on empty) restores the normal list. Folder views query the SQLite index (instant, whole folder history); reactive/Done views filter their already-loaded aggregate in memory.
 
 ## Key files
 | File | Role |
@@ -20,6 +20,11 @@ The pill search bar above the message list. Enter runs the search; the × (or En
 - Row tag chips (reactive folder membership) show in results — that behavior was explicitly requested.
 
 ## Change log
+
+### 2026-07-07 — Moved search into the list pane
+**Goal:** search should read as belonging to the inbox list, not the app title bar.
+**Changes:** relocated the `.search-bar` element out of `.titlebar` into `.message-list-pane`, above the `#segmented` filter; full-width via `.message-list-pane .search-bar` override (`width:auto; margin:0 20px 10px`). Placeholder now "Search this folder". IDs (`search-input`/`search-clear`) unchanged, so search.js, the ⌘F handler (app.js), and the loadMore/sync guards keep working untouched.
+**Result:** search input sits directly above the list; ⌘F still focuses it.
 
 ### 2026-07-07 — Initial doc
 **Goal:** capture search after its migration from live IMAP SEARCH to the local index.

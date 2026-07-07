@@ -3,10 +3,11 @@
 import { api } from './api.js';
 import { state } from './state.js';
 import { $, avatarColor, folderIcon, sortFolders, escapeHtml, toast } from './utils.js';
-import { loadMessages } from './list.js';
+import { loadMessages, isInboxSelected } from './list.js';
 import { renderReader } from './reader.js';
 import { renderReactive } from './reactive.js';
 import { clearSearch } from './search.js';
+import { updateStats } from './status.js';
 
 export function renderAccounts() {
   const list = $('account-list');
@@ -46,12 +47,49 @@ export function renderAccounts() {
   }
 }
 
+// The "Static" section above Folders: the plain Inbox and a Complete Inbox that
+// shows every inbox message, including mail hidden by reactive folders / done.
+export function renderStatic() {
+  const list = $('static-list');
+  list.innerHTML = '';
+  if (!state.folders.length) return;
+
+  const inboxActive = isInboxSelected() && !state.reactiveId && !state.completeInbox;
+  const inboxBtn = document.createElement('button');
+  inboxBtn.className = `nav-item ${inboxActive ? 'active' : ''}`;
+  inboxBtn.innerHTML = folderIcon('\\Inbox');
+  const inboxLabel = document.createElement('span');
+  inboxLabel.className = 'label';
+  inboxLabel.textContent = 'Inbox';
+  inboxBtn.appendChild(inboxLabel);
+  if (state.stats.inboxUnread) {
+    const count = document.createElement('span');
+    count.className = 'count';
+    count.textContent = state.stats.inboxUnread.toLocaleString();
+    inboxBtn.appendChild(count);
+  }
+  inboxBtn.addEventListener('click', () => selectStaticInbox());
+  list.appendChild(inboxBtn);
+
+  const completeBtn = document.createElement('button');
+  completeBtn.className = `nav-item ${state.completeInbox ? 'active' : ''}`;
+  completeBtn.innerHTML = folderIcon('\\All');
+  const completeLabel = document.createElement('span');
+  completeLabel.className = 'label';
+  completeLabel.textContent = 'Complete Inbox';
+  completeLabel.title = 'Every inbox message, including mail hidden by reactive folders';
+  completeBtn.appendChild(completeLabel);
+  completeBtn.addEventListener('click', () => selectCompleteInbox());
+  list.appendChild(completeBtn);
+}
+
 export function renderFolders() {
+  renderStatic();
   const list = $('folder-list');
   list.innerHTML = '';
   for (const folder of sortFolders(state.folders)) {
     const btn = document.createElement('button');
-    const active = folder.path === state.folderPath && !state.reactiveId;
+    const active = folder.path === state.folderPath && !state.reactiveId && !state.completeInbox;
     btn.className = `nav-item ${active ? 'active' : ''}`;
     btn.innerHTML = folderIcon(folder.specialUse);
     const label = document.createElement('span');
@@ -59,6 +97,12 @@ export function renderFolders() {
     label.textContent = folder.name;
     label.title = folder.path;
     btn.appendChild(label);
+    if (folder.specialUse === '\\Inbox' && state.stats.inboxUnread) {
+      const count = document.createElement('span');
+      count.className = 'count';
+      count.textContent = state.stats.inboxUnread.toLocaleString();
+      btn.appendChild(count);
+    }
     btn.addEventListener('click', () => selectFolder(folder.path));
     list.appendChild(btn);
   }
@@ -68,6 +112,7 @@ export function resetPanes() {
   state.folders = [];
   state.folderPath = null;
   state.reactiveId = null;
+  state.completeInbox = false;
   state.messages = [];
   state.baseMessages = [];
   state.message = null;
@@ -91,6 +136,7 @@ export async function selectAccount(accountId) {
     state.doneIds = new Set(state.done.map((d) => d.messageId));
     renderReactive();
     api.syncNow(accountId).catch(() => {}); // freshen the index in the background
+    updateStats();
     state.folders = await api.listFolders(accountId);
     renderFolders();
     const inbox = state.folders.find((f) => f.specialUse === '\\Inbox') || state.folders[0];
@@ -104,6 +150,7 @@ export async function selectAccount(accountId) {
 export async function selectFolder(folderPath) {
   state.folderPath = folderPath;
   state.reactiveId = null;
+  state.completeInbox = false;
   state.message = null;
   clearSearch();
   renderFolders();
@@ -111,6 +158,29 @@ export async function selectFolder(folderPath) {
   renderReader();
   const folder = state.folders.find((f) => f.path === folderPath);
   $('folder-title').textContent = folder ? folder.name : folderPath;
+  await loadMessages();
+}
+
+// Static "Inbox" — identical to selecting the inbox mailbox in Folders.
+export function selectStaticInbox() {
+  const inbox = state.folders.find((f) => f.specialUse === '\\Inbox') || state.folders[0];
+  if (inbox) return selectFolder(inbox.path);
+}
+
+// Static "Complete Inbox" — the inbox mailbox with no reactive-hide / done
+// filtering, so every message shows even if a reactive folder hides its sender.
+export async function selectCompleteInbox() {
+  const inbox = state.folders.find((f) => f.specialUse === '\\Inbox') || state.folders[0];
+  if (!inbox) return;
+  state.folderPath = inbox.path;
+  state.reactiveId = null;
+  state.completeInbox = true;
+  state.message = null;
+  clearSearch();
+  renderFolders();
+  renderReactive();
+  renderReader();
+  $('folder-title').textContent = 'Complete Inbox';
   await loadMessages();
 }
 

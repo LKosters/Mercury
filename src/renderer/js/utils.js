@@ -36,6 +36,10 @@ export function formatFullDate(iso) {
   });
 }
 
+export function formatDayMonth(iso) {
+  return new Date(iso).toLocaleDateString([], { day: 'numeric', month: 'long' });
+}
+
 export function formatSize(bytes) {
   if (bytes > 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   if (bytes > 1024) return `${Math.round(bytes / 1024)} KB`;

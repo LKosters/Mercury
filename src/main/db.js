@@ -179,6 +179,31 @@ function deleteMessage(accountId, folder, uid) {
     .run(accountId, folder, uid);
 }
 
+// Account-wide totals for the status bar and sidebar badges.
+function stats(accountId) {
+  const d = init();
+  const total = d
+    .prepare('SELECT COUNT(*) AS c FROM messages WHERE account_id = ?')
+    .get(accountId).c;
+  const inboxUnread = d
+    .prepare("SELECT COUNT(*) AS c FROM messages WHERE account_id = ? AND folder = 'INBOX' AND seen = 0")
+    .get(accountId).c;
+  return { total, inboxUnread };
+}
+
+// Distinct-message count per reactive folder (senders list per folder).
+function reactiveCount(accountId, senders) {
+  if (!senders.length) return 0;
+  const d = init();
+  const placeholders = senders.map(() => '?').join(',');
+  return d
+    .prepare(
+      `SELECT COUNT(DISTINCT CASE WHEN message_id != '' THEN message_id ELSE folder || ':' || uid END) AS c
+       FROM messages WHERE account_id = ? AND from_address IN (${placeholders})`
+    )
+    .get(accountId, ...senders.map((s) => s.toLowerCase())).c;
+}
+
 function getFolderState(accountId, folder) {
   return init()
     .prepare('SELECT * FROM folder_state WHERE account_id = ? AND folder = ?')
@@ -207,6 +232,8 @@ module.exports = {
   searchMessages,
   markSeen,
   deleteMessage,
+  stats,
+  reactiveCount,
   getFolderState,
   setFolderState,
 };

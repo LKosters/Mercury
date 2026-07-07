@@ -3,9 +3,10 @@
 
 import { api } from './api.js';
 import { state } from './state.js';
-import { $, avatarColor, initials, formatFullDate, formatSize, escapeHtml, toast } from './utils.js';
+import { $, avatarColor, initials, formatDayMonth, formatSize, escapeHtml, toast } from './utils.js';
 import { markRowActive, removeRowByUid } from './list.js';
 import { updateDoneButton } from './done.js';
+import { selectReactive } from './reactive.js';
 
 export function showReaderStatus(text) {
   $('reader').classList.add('hidden');
@@ -31,22 +32,37 @@ export function renderReader() {
   avatar.style.background = avatarColor(msg.from.address || '?');
   avatar.textContent = initials(msg.from.name, msg.from.address);
 
-  const fromEl = $('reader-from');
-  fromEl.textContent = '';
-  fromEl.append(msg.from.name || msg.from.address);
-  if (msg.from.name && msg.from.address) {
-    const small = document.createElement('small');
-    small.textContent = ` <${msg.from.address}>`;
-    fromEl.appendChild(small);
-  }
+  $('reader-from').textContent = msg.from.name || msg.from.address;
+  $('reader-from-addr').textContent = msg.from.name ? msg.from.address : '';
 
-  const recipients = [...msg.to, ...msg.cc].map((r) => r.name || r.address).join(', ');
-  $('reader-to').textContent = recipients ? `to ${recipients}` : '';
-  $('reader-date').textContent = formatFullDate(msg.date);
+  const recipients = [...msg.to, ...msg.cc].map((r) => r.address || r.name).join(', ');
+  const bylineParts = [msg.from.name || msg.from.address, formatDayMonth(msg.date)];
+  if (recipients) bylineParts.push(`to ${recipients}`);
+  $('reader-byline').textContent = bylineParts.join(' · ');
 
+  renderFiledLine(msg);
   updateDoneButton();
   renderAttachments(msg);
   renderBody(msg);
+}
+
+// "Filed automatically into <reactive folder>" — shown when the sender is
+// tagged into one or more reactive folders.
+function renderFiledLine(msg) {
+  const line = $('filed-line');
+  const links = $('filed-links');
+  links.innerHTML = '';
+  const addr = (msg.from.address || '').toLowerCase();
+  const folders = state.reactive.filter((rf) => rf.senders.includes(addr));
+  line.classList.toggle('hidden', !folders.length);
+  folders.forEach((rf, i) => {
+    if (i > 0) links.append(', ');
+    const link = document.createElement('button');
+    link.className = 'filed-link';
+    link.textContent = rf.name;
+    link.addEventListener('click', () => selectReactive(rf.id));
+    links.appendChild(link);
+  });
 }
 
 function renderAttachments(msg) {
@@ -71,7 +87,13 @@ function renderAttachments(msg) {
 }
 
 function renderBody(msg) {
+  // HTML email is designed for white; plain-text mail is themed to match the
+  // dark reading pane (like the reference design).
+  const isPlain = !msg.html;
   const body = msg.html || `<pre style="white-space:pre-wrap;font-family:inherit">${escapeHtml(msg.text)}</pre>`;
+  const bodyStyle = isPlain
+    ? 'color:#f3ede7;background:transparent'
+    : 'color:#1c1c22;background:#ffffff';
 
   // Recreate the frame per message: a fresh element gets a fresh compositor
   // surface, avoiding the macOS glitch where a reused frame turns permanently
@@ -81,13 +103,13 @@ function renderBody(msg) {
   const old = $('reader-frame');
   const frame = document.createElement('iframe');
   frame.id = 'reader-frame';
-  frame.className = 'reader-frame';
+  frame.className = `reader-frame ${isPlain ? 'dark-body' : ''}`;
   frame.setAttribute('sandbox', 'allow-same-origin allow-popups');
   // <base>: makes protocol-relative URLs (//cdn.example.com/x.png) resolve to
   // https instead of file://, and opens all email links out of the app.
   frame.srcdoc = `<!DOCTYPE html><html><head><meta charset="utf-8">
     <base href="https://email.invalid/" target="_blank">
-    <style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.55;color:#1c1c22;margin:0;padding:22px 26px;word-wrap:break-word}img{max-width:100%;height:auto}a{color:#4d5cf0}</style>
+    <style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.55;${bodyStyle};margin:0;padding:22px 30px;word-wrap:break-word}img{max-width:100%;height:auto}a{color:#e9a544}</style>
     </head><body>${body}</body></html>`;
   old.replaceWith(frame);
 }

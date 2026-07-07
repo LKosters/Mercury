@@ -25,24 +25,24 @@ try {
 let win;
 
 function createWindow() {
-  // On macOS the window is transparent with native vibrancy (Liquid Glass);
-  // elsewhere fall back to a solid background.
-  const glassOptions =
+  // Frameless title bar on macOS with traffic lights centered in the 64px
+  // custom title bar; solid warm-dark background (2026-07 redesign — the
+  // earlier vibrancy/glass look was replaced by this flat theme).
+  const chromeOptions =
     process.platform === 'darwin'
       ? {
           titleBarStyle: 'hiddenInset',
-          vibrancy: 'under-window',
-          visualEffectState: 'active',
-          backgroundColor: '#00000000',
+          trafficLightPosition: { x: 20, y: 24 },
+          backgroundColor: '#1d1619',
         }
-      : { backgroundColor: '#101014' };
+      : { backgroundColor: '#1d1619' };
 
   win = new BrowserWindow({
     width: 1440,
     height: 920,
     minWidth: 980,
     minHeight: 600,
-    ...glassOptions,
+    ...chromeOptions,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload.js'),
       contextIsolation: true,
