@@ -1047,6 +1047,106 @@ input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px
 .reader-header { animation: fadeInUp var(--dur-slow) var(--ease); }
 .reader.reader-enter .reader-header { animation: fadeInUp var(--dur-slow) var(--ease); }
 
+/* ============ Boot preloader ============
+   Full-window splash shown while the app boots (accounts load + first folder
+   render). The Mercury planet floats over a pulsing warm halo, the wordmark
+   shimmers, and a thin indeterminate bar sweeps below. Opaque from the first
+   frame (no fade-in) so it covers the app instantly; js/preloader.js adds
+   `.leaving` (fade + gentle zoom) then removes the node. */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(125% 125% at 50% 38%, #2c2129 0%, var(--bg) 62%);
+  -webkit-app-region: drag;               /* window stays draggable while loading */
+  transition: opacity 0.55s var(--ease);  /* fade OUT only — opaque from frame 0 */
+}
+.preloader.leaving { opacity: 0; pointer-events: none; }
+
+.preloader-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  transition: transform 0.55s var(--ease);
+}
+.preloader.leaving .preloader-stage { transform: scale(1.07); }
+
+.planet-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+}
+
+.planet-glow {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(233, 165, 68, 0.55) 0%, rgba(233, 165, 68, 0) 68%);
+  filter: blur(10px);
+  animation: glowPulse 2.8s ease-in-out infinite;
+}
+.preloader-planet {
+  position: relative;
+  width: 94px;
+  height: 94px;
+  border-radius: 50%;
+  object-fit: cover;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55));
+  animation: planetFloat 4s ease-in-out infinite;
+}
+
+.preloader-word {
+  font-family: var(--font-pixel);
+  font-size: 27px;
+  letter-spacing: 0.05em;
+  background: linear-gradient(100deg,
+    var(--text-dim) 18%, var(--accent-strong) 50%, var(--text-dim) 82%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: wordShimmer 2.6s linear infinite;
+}
+
+.preloader-track {
+  width: 156px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.preloader-fill {
+  height: 100%;
+  width: 42%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-strong), transparent);
+  animation: trackSweep 1.5s var(--ease) infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50%      { opacity: 0.95; transform: scale(1.1); }
+}
+@keyframes planetFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes wordShimmer {
+  from { background-position: 220% 0; }
+  to   { background-position: -220% 0; }
+}
+@keyframes trackSweep {
+  from { transform: translateX(-130%); }
+  to   { transform: translateX(330%); }
+}
+
 /* Respect the OS "reduce motion" setting — kill all transitions & animations. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

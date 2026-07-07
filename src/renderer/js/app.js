@@ -15,6 +15,7 @@ import './sync.js';
 import './status.js';
 import './titlebar.js';
 import { applyUpdateResult } from './settings.js';
+import { hidePreloader } from './preloader.js';
 
 $('refresh-btn').addEventListener('click', () => {
   if (!state.accountId) return;
@@ -50,6 +51,8 @@ document.addEventListener('keydown', (e) => {
     if (state.accounts.length) await selectAccount(state.accounts[0].id);
   } catch (err) {
     toast(err.message, 'error');
+  } finally {
+    hidePreloader();
   }
 })();
 
