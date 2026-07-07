@@ -1,0 +1,31 @@
+# Feature: Reactive folders
+
+Per-feature AI doc for **Mercury** (email-app). This is the app's signature custom feature.
+
+## What it is
+App-local virtual folders driven by tagged **senders**: tag a sender into a reactive folder and all their mail (across the whole mailbox, any folder) aggregates there automatically. Optionally a folder can hide its senders' mail from the inbox view (Gmail-tabs-like). Nothing is written to the mail server — invisible to other clients. Folders are per-account, have a color, and can be renamed.
+
+## Key files
+| File | Role |
+|---|---|
+| `src/main/reactive.js` | Store: `userData/reactive-folders.json` — id, name, accountId, color, senders[], hideFromInbox |
+| `src/main/db.js` | `reactiveMessages(accountId, senders)` — single indexed SQL query, deduped by Message-ID |
+| `src/renderer/js/reactive.js` | Sidebar section, tag-sender menu, create modal, manage modal (rename/hide/senders) |
+| `src/renderer/js/list.js` | `hiddenSenders()` filter in `fetchPage`; tag chips on rows |
+
+## Specifics (do NOT regress)
+- Sender addresses are stored and compared **lowercased** everywhere.
+- `hideFromInbox` filtering happens renderer-side in `fetchPage` and applies **only when the inbox is selected** — other folders, search, and the reactive folders themselves always show everything.
+- Every mutation that can change inbox visibility (tag, untag, toggle hide, delete folder) refreshes the inbox if it's the current view — keep those `loadMessages()` calls.
+- The reactive list in the sidebar always renders the built-in **Done** entry first (`state.reactiveId === '__done__'`, see [done.md](done.md)); it is not a real reactive folder and must stay non-deletable.
+- Per-account: `reactive.list(accountId)` also migrates legacy unowned folders by assigning them to the first account that lists — leave the migration in place.
+- Data flows through the local index, so a brand-new sender appears in the folder only after the next sync cycle (≤5 min or manual refresh).
+- Folder color comes from a fixed palette by creation order; row chips derive their tint via `color-mix(... 18%, transparent)`.
+
+## Change log
+
+### 2026-07-07 — Initial doc
+**Goal:** capture the feature: user-invented "reactive folders" concept.
+**Changes (accumulated):** sender tagging via reader menu; create/manage modals; hide-from-inbox toggle; per-account scoping with legacy migration; rename; row tag chips; aggregation moved from live IMAP searches to one SQL query over the index.
+**Result:** instant reactive folders spanning the entire mail history.
+**Not done / out of scope:** rules beyond sender (subject/domain matching); drag-and-drop tagging; cross-account folders (deliberately removed — user wanted per-account).
