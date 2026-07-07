@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https: http:; font-src data: https: http:; frame-src 'self' data: blob:" />
+  <title>Mercury</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="drag-region"></div>
+
+      <div class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M8.2 3.6a4.4 4.4 0 0 0 7.6 0" />
+            <circle cx="12" cy="11" r="4.6" />
+            <path d="M12 15.6V21M9.5 18.5h5" />
+          </svg>
+        </span>
+        <span class="brand-name">Mercury</span>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-heading">
+          <span>Accounts</span>
+          <button class="icon-btn" id="add-account-btn" title="Add account">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+          </button>
+        </div>
+        <div id="account-list" class="account-list"></div>
+      </div>
+
+      <div class="sidebar-section grow">
+        <div class="sidebar-heading"><span>Folders</span></div>
+        <div id="folder-list" class="folder-list"></div>
+      </div>
+
+      <div class="sidebar-section reactive-section">
+        <div class="sidebar-heading">
+          <span>Reactive</span>
+          <button class="icon-btn" id="add-reactive-btn" title="New reactive folder">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+          </button>
+        </div>
+        <div id="reactive-list" class="folder-list"></div>
+      </div>
+
+      <button class="compose-btn" id="compose-btn">
+        <svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Compose
+      </button>
+    </aside>
+
+    <!-- Message list -->
+    <section class="message-list-pane">
+      <header class="pane-header">
+        <h2 id="folder-title">Inbox</h2>
+        <span id="sync-status" class="sync-status"></span>
+        <button class="icon-btn" id="refresh-btn" title="Sync now">
+          <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </header>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="text" id="search-input" placeholder="Search mail (Enter)" />
+        <button class="icon-btn hidden" id="search-clear" title="Clear search">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+        </button>
+      </div>
+      <div id="message-list" class="message-list">
+        <div class="empty-hint">Add an account to get started</div>
+      </div>
+    </section>
+
+    <!-- Reading pane -->
+    <section class="reading-pane">
+      <div id="reader-empty" class="reader-empty">
+        <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="m2.5 6.5 9.5 7 9.5-7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <p>Select a message to read</p>
+      </div>
+      <div id="reader" class="reader hidden">
+        <header class="reader-header">
+          <div class="reader-title-row">
+            <h1 id="reader-subject"></h1>
+            <div class="reader-actions">
+              <button class="ghost-btn" id="done-btn">Mark done</button>
+              <button class="ghost-btn" id="tag-btn">Tag sender</button>
+              <button class="ghost-btn" id="reply-btn">Reply</button>
+              <button class="ghost-btn danger" id="delete-btn">Delete</button>
+            </div>
+          </div>
+          <div class="reader-meta">
+            <div class="avatar" id="reader-avatar"></div>
+            <div class="reader-meta-text">
+              <div class="reader-from" id="reader-from"></div>
+              <div class="reader-to" id="reader-to"></div>
+            </div>
+            <div class="reader-date" id="reader-date"></div>
+          </div>
+          <div id="reader-attachments" class="attachments hidden"></div>
+        </header>
+        <iframe id="reader-frame" class="reader-frame" sandbox="allow-same-origin allow-popups"></iframe>
+      </div>
+    </section>
+  </div>
+
+  <!-- Add account modal -->
+  <div class="modal-backdrop hidden" id="account-modal">
+    <div class="modal">
+      <h2>Add account</h2>
+      <div class="preset-row">
+        <button class="preset-btn" id="preset-gmail">
+          <span class="preset-dot gmail"></span> Gmail
+        </button>
+        <button class="preset-btn" id="preset-custom">
+          <span class="preset-dot custom"></span> Custom server
+        </button>
+      </div>
+      <p class="hint hidden" id="gmail-hint">
+        Gmail needs an <strong>App Password</strong> — create one at
+        Google Account &rarr; Security &rarr; 2-Step Verification &rarr; App passwords,
+        then paste it below.
+      </p>
+      <form id="account-form">
+        <div class="field-grid">
+          <label class="field span2">
+            <span>Display name</span>
+            <input type="text" name="name" placeholder="Lau Kosters" />
+          </label>
+          <label class="field span2">
+            <span>Email address</span>
+            <input type="email" name="email" required placeholder="you@example.com" />
+          </label>
+          <label class="field span2">
+            <span>Username <small>(defaults to email)</small></span>
+            <input type="text" name="user" placeholder="you@example.com" />
+          </label>
+          <label class="field span2">
+            <span>Password / app password</span>
+            <input type="password" name="password" required />
+            <a class="field-link" href="https://myaccount.google.com/apppasswords" target="_blank">
+              Using Gmail? Create an app password &#8599;
+            </a>
+          </label>
+          <label class="field span2">
+            <span>IMAP host</span>
+            <input type="text" name="imapHost" required placeholder="imap.example.com" />
+          </label>
+          <label class="field">
+            <span>IMAP port</span>
+            <input type="number" name="imapPort" required value="993" />
+          </label>
+          <label class="field checkbox">
+            <input type="checkbox" name="imapSecure" checked />
+            <span>SSL/TLS</span>
+          </label>
+          <label class="field span2">
+            <span>SMTP host</span>
+            <input type="text" name="smtpHost" required placeholder="smtp.example.com" />
+          </label>
+          <label class="field">
+            <span>SMTP port</span>
+            <input type="number" name="smtpPort" required value="465" />
+          </label>
+          <label class="field checkbox">
+            <input type="checkbox" name="smtpSecure" checked />
+            <span>SSL/TLS</span>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="ghost-btn" id="account-cancel">Cancel</button>
+          <button type="button" class="ghost-btn" id="account-test">Test connection</button>
+          <button type="submit" class="primary-btn" id="account-save">Add account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Gmail-style docked composer -->
+  <div id="composer" class="composer hidden">
+    <header class="composer-header" id="composer-header">
+      <span id="composer-title">New Message</span>
+      <div class="composer-header-actions">
+        <button type="button" class="composer-hbtn" id="composer-min" title="Minimise">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" class="composer-hbtn" id="composer-close" title="Close">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+    <form id="compose-form" class="composer-body">
+      <div class="composer-row">
+        <span class="composer-label">To</span>
+        <input type="text" name="to" required autocomplete="off" />
+        <div class="cc-links">
+          <button type="button" id="show-cc">Cc</button>
+          <button type="button" id="show-bcc">Bcc</button>
+        </div>
+      </div>
+      <div class="composer-row hidden" id="cc-row">
+        <span class="composer-label">Cc</span>
+        <input type="text" name="cc" autocomplete="off" />
+      </div>
+      <div class="composer-row hidden" id="bcc-row">
+        <span class="composer-label">Bcc</span>
+        <input type="text" name="bcc" autocomplete="off" />
+      </div>
+      <div class="composer-row">
+        <input type="text" name="subject" class="composer-subject" placeholder="Subject" autocomplete="off" />
+      </div>
+      <div id="composer-editor" class="composer-editor" contenteditable="true"></div>
+      <div class="composer-toolbar">
+        <button type="submit" class="send-btn" id="compose-send">Send</button>
+        <div class="fmt-group">
+          <button type="button" data-cmd="bold" title="Bold (Cmd+B)"><b>B</b></button>
+          <button type="button" data-cmd="italic" title="Italic (Cmd+I)"><i>I</i></button>
+          <button type="button" data-cmd="underline" title="Underline (Cmd+U)"><u>U</u></button>
+          <button type="button" data-cmd="insertUnorderedList" title="Bulleted list">
+            <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="4" cy="6" r="1.4" fill="currentColor"/><circle cx="4" cy="12" r="1.4" fill="currentColor"/><circle cx="4" cy="18" r="1.4" fill="currentColor"/></svg>
+          </button>
+          <button type="button" data-cmd="removeFormat" title="Clear formatting">
+            <svg viewBox="0 0 24 24"><path d="M6 4h12M9 4l3 16m-5 0h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m17 15 5 5m0-5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <button type="button" class="composer-trash" id="compose-discard" title="Discard draft">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tag-sender popup menu -->
+  <div id="tag-menu" class="popup-menu hidden"></div>
+
+  <!-- New reactive folder modal -->
+  <div class="modal-backdrop hidden" id="reactive-modal">
+    <div class="modal">
+      <h2>New reactive folder</h2>
+      <p class="hint">A reactive folder automatically collects all mail from the senders you tag into it. It only exists in this app — nothing changes on the mail server.</p>
+      <form id="reactive-form">
+        <label class="field">
+          <span>Folder name</span>
+          <input type="text" name="name" required placeholder="e.g. Newsletters, Invoices, Family" />
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="ghost-btn" id="reactive-cancel">Cancel</button>
+          <button type="submit" class="primary-btn">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Manage reactive folder modal -->
+  <div class="modal-backdrop hidden" id="manage-modal">
+    <div class="modal">
+      <h2 id="manage-title">Reactive folder</h2>
+      <label class="field" style="margin-bottom:10px">
+        <span>Folder name</span>
+        <input type="text" id="manage-name" />
+      </label>
+      <label class="field checkbox manage-hide">
+        <input type="checkbox" id="manage-hide-toggle" />
+        <span>Hide these senders from the Inbox (this app only)</span>
+      </label>
+      <div class="sidebar-heading" style="padding-left:0"><span>Tagged senders</span></div>
+      <div id="manage-senders" class="sender-list"></div>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn danger" id="manage-delete">Delete folder</button>
+        <button type="button" class="primary-btn" id="manage-close">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
