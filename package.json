@@ -1,6 +1,6 @@
 {
   "name": "email-app",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Mercury — a fast, glassy desktop email client for Gmail and custom IMAP/SMTP servers",
   "main": "src/main/main.js",
   "scripts": {
