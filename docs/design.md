@@ -29,6 +29,9 @@ An Apple "Liquid Glass" look: the window is transparent with **native macOS vibr
 
 ## Change log
 
+### 2026-07-07 — App icon reframed on a flat dark tile (Lithium-style)
+**Changes:** replaced the full-bleed planet-on-transparency `assets/icon.png` with the planet centered on a flat opaque dark tile, matching the sibling Lithium app's icon treatment. Background `#1c1b18` (28,27,24) — Lithium's exact colour; planet disc 600px centered on a 1024px canvas (~212px padding, ~Lithium's glyph footprint); no gradient/glow/rounded corners (macOS masks corners). Regeneration is a throwaway PIL script (not in repo): tight-crop `assets/planet.png` to its alpha bbox, LANCZOS-resize to 600px, `alpha_composite` onto the dark canvas. `assets/planet.png` (the sidebar mark) is unchanged.
+
 ### 2026-07-07 — Title bar filled: global search, sync pill, compose, settings
 **Goal:** the title bar was mostly empty (brand + one refresh button); fill it.
 **Changes:** added a centered global-search field (`.titlebar-search-wrap` / `.titlebar-search`, ⌘F now focuses it), a live background-sync status pill (`.sync-pill` — amber pulsing dot while syncing, "Synced Xm ago" when idle, driven by its own `onSyncEvent` subscription in `titlebar.js`), a compose button, and a Settings gear (`#settings-btn`). Removed the now-unused `.titlebar-spacer`; the search wrap is `flex:1` and pushes the action cluster right. Dropped the misleading ⌘F hint from the list-pane search. New renderer modules: `titlebar.js` (search + pill + compose) and `settings.js` (the modal). See [settings.md](settings.md) and [search.md](search.md).
