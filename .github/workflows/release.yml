@@ -46,9 +46,12 @@ jobs:
       # during packaging, so no separate electron-rebuild step is required.
       - name: Build
         run: npx electron-builder --${{ matrix.platform }} --publish never
-        env:
-          # No code-signing certs in CI — build unsigned installers.
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        # No Apple Developer cert in CI. mac uses ad-hoc signing (build.mac.identity
+        # "-") so the .app has a VALID signature (not the broken linker stub) — this
+        # turns the scary "app is damaged" Gatekeeper block into the normal
+        # "unidentified developer" prompt users can bypass. Do NOT set
+        # CSC_IDENTITY_AUTO_DISCOVERY=false here: it makes electron-builder skip
+        # signing entirely, which reintroduces the "damaged" error.
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
