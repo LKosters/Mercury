@@ -140,28 +140,6 @@ function mapEnvelope(msg) {
   };
 }
 
-// Returns one page of messages, newest first. `offset` = how many of the
-// newest messages to skip (i.e. how many the client already has).
-async function listMessages(account, folderPath, limit = 50, offset = 0) {
-  return withImap(account, async (client) => {
-    const lock = await client.getMailboxLock(folderPath);
-    try {
-      const total = client.mailbox.exists;
-      const end = total - offset;
-      if (!total || end < 1) return { messages: [], total, hasMore: false };
-      const start = Math.max(1, end - limit + 1);
-      const messages = [];
-      for await (const msg of client.fetch(`${start}:${end}`, ENVELOPE_QUERY)) {
-        messages.push(mapEnvelope(msg));
-      }
-      messages.sort((a, b) => new Date(b.date) - new Date(a.date));
-      return { messages, total, hasMore: start > 1 };
-    } finally {
-      lock.release();
-    }
-  });
-}
-
 async function fetchEnvelopesByUid(client, uids) {
   if (!uids.length) return [];
   const messages = [];
@@ -172,58 +150,9 @@ async function fetchEnvelopesByUid(client, uids) {
   return messages;
 }
 
-async function searchMessages(account, folderPath, query, limit = 200) {
-  return withImap(account, async (client) => {
-    const lock = await client.getMailboxLock(folderPath);
-    try {
-      // OR over subject / from / to. Nested pairs for maximum server compat.
-      const criteria = { or: [{ subject: query }, { or: [{ from: query }, { to: query }] }] };
-      const uids = (await client.search(criteria, { uid: true })) || [];
-      const recent = uids.sort((a, b) => a - b).slice(-limit);
-      const messages = await fetchEnvelopesByUid(client, recent);
-      return messages.map((m) => ({ ...m, folder: folderPath }));
-    } finally {
-      lock.release();
-    }
-  });
-}
-
-// Aggregate all mail from a set of sender addresses. Searches the all-mail
-// folder when the server has one (Gmail), otherwise the inbox.
-async function reactiveMessages(account, senders, limit = 300) {
-  if (!senders.length) return [];
-  const boxes = await getBoxes(account);
-  const allMail = boxes.find((b) => b.specialUse === '\\All');
-  const target = allMail ? allMail.path : 'INBOX';
-
-  return withImap(account, async (client) => {
-    const lock = await client.getMailboxLock(target);
-    try {
-      const uidSet = new Set();
-      for (const sender of senders) {
-        const uids = (await client.search({ from: sender }, { uid: true })) || [];
-        for (const uid of uids) uidSet.add(uid);
-      }
-      const recent = [...uidSet].sort((a, b) => a - b).slice(-limit);
-      const messages = await fetchEnvelopesByUid(client, recent);
-      return messages.map((m) => ({ ...m, folder: target }));
-    } finally {
-      lock.release();
-    }
-  });
-}
-
 async function fetchParsed(client, uid) {
   const msg = await client.fetchOne(String(uid), { source: true }, { uid: true });
   if (!msg || !msg.source) throw new Error('Message not found');
-  if (process.env.MAIL_DEBUG_DIR) {
-    try {
-      require('fs').writeFileSync(
-        require('path').join(process.env.MAIL_DEBUG_DIR, `${uid}.eml`),
-        msg.source
-      );
-    } catch {}
-  }
   return simpleParser(msg.source);
 }
 
@@ -370,9 +299,6 @@ function buildRawMessage(account, message) {
 module.exports = {
   testConnection,
   listFolders,
-  listMessages,
-  searchMessages,
-  reactiveMessages,
   getMessage,
   getAttachment,
   deleteMessage,

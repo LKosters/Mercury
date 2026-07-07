@@ -1,0 +1,42 @@
+// Entry point: wires up global shortcuts and boots the app. Feature modules
+// register their own event listeners as a side effect of being imported.
+
+import { api } from './api.js';
+import { state } from './state.js';
+import { $, toast } from './utils.js';
+import { renderAccounts, selectAccount } from './sidebar.js';
+import { loadMessages } from './list.js';
+import { loadReactive, closeTagMenu } from './reactive.js';
+import { renderDoneList } from './done.js';
+import './reader.js';
+import './search.js';
+import './composer.js';
+import './sync.js';
+
+$('refresh-btn').addEventListener('click', () => {
+  if (!state.accountId) return;
+  api.syncNow(state.accountId).catch(() => {});
+  if (state.reactiveId === '__done__') renderDoneList();
+  else if (state.reactiveId) loadReactive();
+  else if (state.folderPath) loadMessages();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    $('account-modal').classList.add('hidden');
+    $('reactive-modal').classList.add('hidden');
+    $('manage-modal').classList.add('hidden');
+    closeTagMenu();
+    if (!$('composer').classList.contains('hidden')) $('composer').classList.add('minimized');
+  }
+});
+
+(async function init() {
+  try {
+    state.accounts = await api.listAccounts();
+    renderAccounts();
+    if (state.accounts.length) await selectAccount(state.accounts[0].id);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+})();

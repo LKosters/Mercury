@@ -42,13 +42,31 @@ Fill in your IMAP host/port (usually 993 with SSL) and SMTP host/port (usually 4
 
 ```
 src/
-  main/
-    main.js       Electron entry point + IPC handlers
-    accounts.js   Account store (passwords encrypted via safeStorage)
-    mail.js       IMAP (imapflow) + SMTP (nodemailer) + parsing (mailparser)
-  preload.js      Context-isolated bridge exposed as window.mailApi
+  main/                Main process
+    main.js            Entry point: window, lifecycle, sync scheduler
+    ipc.js             All IPC handlers (renderer <-> main)
+    accounts.js        Account store (passwords encrypted via safeStorage)
+    mail.js            IMAP (imapflow) + SMTP (nodemailer) + parsing (mailparser)
+    db.js              SQLite message index (better-sqlite3)
+    sync.js            Background sync engine (full + incremental)
+    reactive.js        Reactive folder store (app-local virtual folders)
+    done.js            Done-message store (app-local checkmarks)
+  preload.js           Context-isolated bridge exposed as window.mailApi
   renderer/
-    index.html    UI markup + modals
-    styles.css    Theme (dark/light via prefers-color-scheme)
-    app.js        UI state and rendering
+    index.html         UI markup + modals
+    styles.css         Liquid Glass theme (dark/light)
+    js/                ES modules, one per component
+      app.js           Entry point: init + global shortcuts
+      state.js         Shared UI state
+      api.js           Bridge re-export
+      utils.js         Formatting, icons, toast
+      sidebar.js       Accounts, folders, add-account modal
+      list.js          Message list, pagination, inbox filters
+      reader.js        Reading pane + sandboxed body frame
+      composer.js      Gmail-style docked composer
+      reactive.js      Reactive folders UI + tag menu + manage modal
+      done.js          Done feature
+      search.js        Search bar
+      sync.js          Sync status + live refresh
+assets/                App icon
 ```
