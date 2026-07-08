@@ -30,11 +30,11 @@
   --text-dim: #b3a8a6;
   --text-faint: #776d70;
 
-  /* Accent — amber */
-  --accent: #e9a544;
-  --accent-strong: #f0b055;
-  --on-accent: #2b1f10;
-  --accent-soft: rgba(233, 165, 68, 0.16);
+  /* Accent — magenta */
+  --accent: #ad386a;
+  --accent-strong: #c24a7e;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(173, 56, 106, 0.18);
 
   --danger: #e0705f;
   --green: #7fae74;
@@ -132,12 +132,9 @@ input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-mark {
   display: grid; place-items: center;
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  overflow: hidden;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.25);
+  width: 30px; height: 30px;       /* the logo shown directly — no app-icon tile */
 }
-.brand-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.brand-mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .brand-name {
   font-family: var(--font-pixel);
   font-size: 17px;      /* pixel face runs large; nudge down from 19px */
@@ -324,7 +321,7 @@ input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px
   flex-shrink: 0;
   transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.compose-btn:hover { background: var(--accent-strong); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(233, 165, 68, 0.28); }
+.compose-btn:hover { background: var(--accent-strong); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(173, 56, 106, 0.28); }
 .compose-btn:active { transform: translateY(0) scale(0.98); box-shadow: none; }
 .compose-btn svg { width: 16px; height: 16px; }
 
@@ -602,7 +599,7 @@ input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px
   font-weight: 700;
   transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.primary-btn:hover { background: var(--accent-strong); box-shadow: 0 6px 16px rgba(233, 165, 68, 0.28); }
+.primary-btn:hover { background: var(--accent-strong); box-shadow: 0 6px 16px rgba(173, 56, 106, 0.28); }
 .primary-btn:active { transform: scale(0.97); box-shadow: none; }
 .primary-btn:disabled, .ghost-btn:disabled { opacity: 0.5; cursor: default; }
 
@@ -935,7 +932,7 @@ input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px
   border-radius: 12px;
   transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.send-btn:hover { background: var(--accent-strong); box-shadow: 0 6px 16px rgba(233, 165, 68, 0.28); }
+.send-btn:hover { background: var(--accent-strong); box-shadow: 0 6px 16px rgba(173, 56, 106, 0.28); }
 .send-btn:active { transform: scale(0.97); box-shadow: none; }
 .send-btn:disabled { opacity: 0.5; cursor: default; }
 
@@ -1088,7 +1085,7 @@ input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(233, 165, 68, 0.55) 0%, rgba(233, 165, 68, 0) 68%);
+  background: radial-gradient(circle, rgba(173, 56, 106, 0.55) 0%, rgba(173, 56, 106, 0) 68%);
   filter: blur(10px);
   animation: glowPulse 2.8s ease-in-out infinite;
 }
@@ -1096,8 +1093,7 @@ input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px
   position: relative;
   width: 94px;
   height: 94px;
-  border-radius: 50%;
-  object-fit: cover;
+  object-fit: contain;             /* the logo shown directly — no app-icon tile */
   filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55));
   animation: planetFloat 4s ease-in-out infinite;
 }
@@ -1174,8 +1170,7 @@ input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px
 .welcome-planet {
   position: relative;
   width: 92px; height: 92px;
-  border-radius: 50%;
-  object-fit: cover;
+  object-fit: contain;             /* the logo shown directly — no app-icon tile */
   filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.55));
   animation: planetFloat 4s ease-in-out infinite;
 }
