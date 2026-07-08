@@ -65,10 +65,12 @@ export function renderStatic() {
   inboxLabel.className = 'label';
   inboxLabel.textContent = 'Inbox';
   inboxBtn.appendChild(inboxLabel);
-  if (state.stats.inboxUnread) {
+  // Visible count: full inbox unread minus mail hidden by reactive folders,
+  // so it matches what the filtered Inbox view actually shows.
+  if (state.stats.inboxVisibleUnread) {
     const count = document.createElement('span');
     count.className = 'count';
-    count.textContent = state.stats.inboxUnread.toLocaleString();
+    count.textContent = state.stats.inboxVisibleUnread.toLocaleString();
     inboxBtn.appendChild(count);
   }
   inboxBtn.addEventListener('click', () => selectStaticInbox());
@@ -82,6 +84,13 @@ export function renderStatic() {
   completeLabel.textContent = 'Complete Inbox';
   completeLabel.title = 'Every inbox message, including mail hidden by reactive folders';
   completeBtn.appendChild(completeLabel);
+  // Full inbox unread — includes the reactive-hidden mail the plain Inbox drops.
+  if (state.stats.inboxUnread) {
+    const count = document.createElement('span');
+    count.className = 'count';
+    count.textContent = state.stats.inboxUnread.toLocaleString();
+    completeBtn.appendChild(count);
+  }
   completeBtn.addEventListener('click', () => selectCompleteInbox());
   list.appendChild(completeBtn);
 }
@@ -100,10 +109,10 @@ export function renderFolders() {
     label.textContent = folder.name;
     label.title = folder.path;
     btn.appendChild(label);
-    if (folder.specialUse === '\\Inbox' && state.stats.inboxUnread) {
+    if (folder.specialUse === '\\Inbox' && state.stats.inboxVisibleUnread) {
       const count = document.createElement('span');
       count.className = 'count';
-      count.textContent = state.stats.inboxUnread.toLocaleString();
+      count.textContent = state.stats.inboxVisibleUnread.toLocaleString();
       btn.appendChild(count);
     }
     btn.addEventListener('click', () => selectFolder(folder.path));

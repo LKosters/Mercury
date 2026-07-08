@@ -214,7 +214,10 @@ function deleteMessage(accountId, folder, uid) {
 }
 
 // Account-wide totals for the status bar and sidebar badges.
-function stats(accountId) {
+// `inboxUnread` is the full inbox unread count (shown on Complete Inbox);
+// `inboxVisibleUnread` excludes mail from reactive-hidden senders, so it
+// matches the filtered Inbox view. Pass the union of hide-from-inbox senders.
+function stats(accountId, hiddenSenders = []) {
   const d = init();
   const total = d
     .prepare('SELECT COUNT(*) AS c FROM messages WHERE account_id = ?')
@@ -222,7 +225,18 @@ function stats(accountId) {
   const inboxUnread = d
     .prepare("SELECT COUNT(*) AS c FROM messages WHERE account_id = ? AND folder = 'INBOX' AND seen = 0")
     .get(accountId).c;
-  return { total, inboxUnread };
+  let inboxVisibleUnread = inboxUnread;
+  if (hiddenSenders.length) {
+    const placeholders = hiddenSenders.map(() => '?').join(',');
+    inboxVisibleUnread = d
+      .prepare(
+        `SELECT COUNT(*) AS c FROM messages
+         WHERE account_id = ? AND folder = 'INBOX' AND seen = 0
+           AND from_address NOT IN (${placeholders})`
+      )
+      .get(accountId, ...hiddenSenders.map((s) => s.toLowerCase())).c;
+  }
+  return { total, inboxUnread, inboxVisibleUnread };
 }
 
 // Distinct-message count per reactive folder (senders list per folder).

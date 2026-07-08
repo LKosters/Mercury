@@ -13,7 +13,7 @@ export const state = {
   reactiveId: null, // selected reactive folder ('__done__' = built-in Done folder)
   done: [], // done records for the current account
   doneIds: new Set(), // messageIds marked done
-  stats: { total: 0, inboxUnread: 0 }, // status bar + inbox badge
+  stats: { total: 0, inboxUnread: 0, inboxVisibleUnread: 0 }, // status bar + inbox badge (visible = minus reactive-hidden)
   reactiveCounts: {}, // reactive folder id -> message count
   messages: [],
   baseMessages: [], // unfiltered list backing the current view (for clearing search)

@@ -24,6 +24,12 @@ App-local virtual folders driven by tagged **senders**: tag a sender into a reac
 
 ## Change log
 
+### 2026-07-08 — Inbox badge excludes reactive-hidden mail; Complete Inbox shows full count
+**Goal:** the Static/Folders **Inbox** unread badge should match what the filtered inbox actually shows, and the full unread count moves to **Complete Inbox**.
+**Changes:** `db.stats(accountId, hiddenSenders)` now also returns `inboxVisibleUnread` (unread INBOX minus `from_address IN (hidden senders)`); `mail:stats` IPC gathers the union of `hideFromInbox` senders from `reactive.list()` and passes them in. Sidebar: Static Inbox + Folders Inbox badges use `inboxVisibleUnread`; Complete Inbox now shows `inboxUnread` (full). Every reactive mutation that changes the hidden-sender set (tag/untag/hide-toggle/delete) now calls `updateStats()` so the badges refresh immediately instead of waiting for the next sync.
+**Result:** Inbox count reflects the filtered view; Complete Inbox carries the total.
+**Out of scope:** the badge stays an *unread* count and does not subtract Done mail (only reactive-hidden senders).
+
 ### 2026-07-07 — Complete Inbox bypasses hide-from-inbox
 **Changes:** new Static-section "Complete Inbox" view (`state.completeInbox`, see [message-list.md](message-list.md)) selects the inbox mailbox but tells `fetchPage` to skip the hidden-sender and done filters, so reactive-hidden mail still appears there. Regular Inbox behavior is unchanged.
 

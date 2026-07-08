@@ -9,6 +9,7 @@ import { renderReader } from './reader.js';
 import { renderFolders, selectFolder } from './sidebar.js';
 import { selectDone } from './done.js';
 import { clearSearch } from './search.js';
+import { updateStats } from './status.js';
 
 const GEAR_SVG =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
@@ -98,8 +99,11 @@ function tagSenderInto(folderId, address) {
       state.reactive = state.reactive.map((f) => (f.id === updated.id ? updated : f));
       renderReactive();
       toast(`${address} tagged into “${updated.name}”`, 'success');
-      // Sender may now be hidden from the inbox — refresh the view if we're in it.
-      if (updated.hideFromInbox && isInboxSelected()) loadMessages();
+      // Sender may now be hidden from the inbox — refresh the view + badge counts.
+      if (updated.hideFromInbox) {
+        updateStats();
+        if (isInboxSelected()) loadMessages();
+      }
     })
     .catch((err) => toast(err.message, 'error'));
 }
@@ -218,6 +222,7 @@ function renderManageSenders() {
         state.reactive = state.reactive.map((f) => (f.id === updated.id ? updated : f));
         renderManageSenders();
         renderReactive();
+        if (updated.hideFromInbox) updateStats(); // sender no longer hidden — refresh badges
         if (state.reactiveId === rf.id) loadReactive();
         else if (updated.hideFromInbox && isInboxSelected()) loadMessages(); // sender's mail reappears
       } catch (err) {
@@ -259,6 +264,7 @@ $('manage-hide-toggle').addEventListener('change', async (e) => {
   try {
     const updated = await api.reactiveSetHidden(manageId, e.target.checked);
     state.reactive = state.reactive.map((f) => (f.id === updated.id ? updated : f));
+    updateStats(); // hidden-sender set changed — refresh Inbox / Complete Inbox badges
     if (isInboxSelected()) loadMessages();
   } catch (err) {
     toast(err.message, 'error');
@@ -282,6 +288,7 @@ $('manage-delete').addEventListener('click', async () => {
     } else if (rf.hideFromInbox && isInboxSelected()) {
       loadMessages(); // previously hidden senders reappear
     }
+    if (rf.hideFromInbox) updateStats(); // hidden-sender set shrank — refresh badges
     renderReactive();
   } catch (err) {
     toast(err.message, 'error');

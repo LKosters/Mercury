@@ -86,7 +86,13 @@ function registerIpc({ getWindow, runSync, syncAll, rescheduleSync }) {
 
   handle('mail:send', (accountId, message) => mail.sendMessage(accounts.getAccount(accountId), message));
 
-  handle('mail:stats', (accountId) => db.stats(accountId));
+  handle('mail:stats', (accountId) => {
+    const hidden = new Set();
+    for (const rf of reactive.list(accountId)) {
+      if (rf.hideFromInbox) rf.senders.forEach((s) => hidden.add(s));
+    }
+    return db.stats(accountId, [...hidden]);
+  });
 
   handle('reactive:counts', (accountId) => {
     const counts = {};
