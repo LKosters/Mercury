@@ -190,7 +190,37 @@
 
   <!-- Status bar -->
   <footer class="statusbar">
-    <div id="status-left"></div>
+    <div class="status-group">
+      <div id="status-left"></div>
+      <!-- System now-playing (Spotify / Apple Music), ported from Lithium's media bar -->
+      <div id="status-media" class="status-media hidden">
+        <button id="media-prev" class="media-btn" title="Previous">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+            <path d="M12 3L6 8l6 5V3z" fill="currentColor" />
+            <rect x="3" y="3" width="2" height="10" rx="0.5" fill="currentColor" />
+          </svg>
+        </button>
+        <button id="media-play" class="media-btn media-play-btn" title="Play / pause">
+          <svg id="media-icon-play" width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M4 2.5l9 5.5-9 5.5V2.5z" fill="currentColor" />
+          </svg>
+          <svg id="media-icon-pause" width="13" height="13" viewBox="0 0 16 16" fill="none" class="hidden">
+            <rect x="3" y="2" width="3.5" height="12" rx="0.8" fill="currentColor" />
+            <rect x="9.5" y="2" width="3.5" height="12" rx="0.8" fill="currentColor" />
+          </svg>
+        </button>
+        <button id="media-next" class="media-btn" title="Next">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+            <path d="M4 3l6 5-6 5V3z" fill="currentColor" />
+            <rect x="11" y="3" width="2" height="10" rx="0.5" fill="currentColor" />
+          </svg>
+        </button>
+        <div class="media-track">
+          <span id="media-title" class="media-title"></span>
+          <div id="media-bar" class="media-bar" title="Seek"><div id="media-progress" class="media-progress"></div></div>
+        </div>
+      </div>
+    </div>
     <div id="status-sync" class="status-sync hidden">
       <span class="sync-dot"></span>
       <span id="status-sync-text"></span>

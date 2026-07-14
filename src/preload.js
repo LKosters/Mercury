@@ -42,6 +42,8 @@ contextBridge.exposeInMainWorld('mailApi', {
   rebuildIndex: () => invoke('settings:rebuildIndex'),
   exportBackup: () => invoke('settings:export'),
   importBackup: () => invoke('settings:import'),
+  mediaNowPlaying: () => invoke('media:nowPlaying'),
+  mediaControl: (action, position) => invoke('media:control', action, position),
   checkForUpdates: () => invoke('updater:check'),
   downloadUpdate: (payload) => invoke('updater:downloadAndInstall', payload),
   openRelease: (url) => invoke('updater:openRelease', url),

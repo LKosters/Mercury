@@ -615,6 +615,54 @@ input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px
 }
 #status-left .unread { color: var(--accent); font-weight: 600; }
 
+.status-group { display: flex; align-items: center; gap: 16px; min-width: 0; }
+#status-left { flex-shrink: 0; }
+
+/* Now-playing widget (system media: Spotify / Apple Music) */
+.status-media {
+  display: flex; align-items: center; gap: 2px;
+  min-width: 0;
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+  animation: fadeIn var(--dur-slow) var(--ease);
+}
+.media-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px;
+  color: var(--text-faint);
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.media-btn:hover { color: var(--text); background: var(--bg-hover); }
+.media-btn:active { transform: scale(0.88); }
+.status-media.playing .media-play-btn { color: var(--accent); }
+.media-track {
+  display: flex; flex-direction: column; gap: 4px;
+  min-width: 0; width: 180px;
+  margin-left: 8px;
+}
+.media-title {
+  font-size: 11px; line-height: 1;
+  color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.media-bar {
+  height: 3px;
+  background: var(--bg-inset);
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.media-progress {
+  height: 100%;
+  width: 0%;
+  background: var(--text-faint);
+  border-radius: 2px;
+  transition: width 0.3s linear;
+}
+.status-media.playing .media-progress { background: var(--accent); }
+
 .status-sync { display: flex; align-items: center; gap: 9px; }
 .status-sync:not(.hidden) { animation: fadeIn var(--dur-slow) var(--ease); }
 .sync-dot {

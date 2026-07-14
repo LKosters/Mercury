@@ -8,10 +8,22 @@ const done = require('./done');
 const db = require('./db');
 const settings = require('./settings');
 const updater = require('./updater');
+const media = require('./media');
 
 const BACKUP_VERSION = 1;
 
 const DEBUG = process.env.MAIL_DEBUG === '1';
+
+// AggregateError (e.g. Node's net stack after trying every server address)
+// often has an empty message — flatten the underlying errors so the UI shows
+// "connect ECONNREFUSED ..." instead of the bare string "AggregateError".
+function errorMessage(err) {
+  if (Array.isArray(err?.errors) && err.errors.length) {
+    const parts = [...new Set(err.errors.map((e) => e?.message || String(e)))];
+    return parts.join('; ');
+  }
+  return err.message || String(err);
+}
 
 function handle(channel, fn) {
   ipcMain.handle(channel, async (_event, ...args) => {
@@ -22,7 +34,7 @@ function handle(channel, fn) {
       return { ok: true, data };
     } catch (err) {
       console.error(`[ipc] ${channel} failed in ${Date.now() - started}ms:`, err.stack || String(err));
-      return { ok: false, error: err.message || String(err) };
+      return { ok: false, error: errorMessage(err) };
     }
   });
 }
@@ -91,7 +103,8 @@ function registerIpc({ getWindow, runSync, syncAll, rescheduleSync }) {
     for (const rf of reactive.list(accountId)) {
       if (rf.hideFromInbox) rf.senders.forEach((s) => hidden.add(s));
     }
-    return db.stats(accountId, [...hidden]);
+    const doneIds = done.list(accountId).map((r) => r.messageId);
+    return db.stats(accountId, [...hidden], doneIds);
   });
 
   handle('reactive:counts', (accountId) => {
@@ -213,6 +226,10 @@ function registerIpc({ getWindow, runSync, syncAll, rescheduleSync }) {
     })
   );
   handle('updater:openRelease', (url) => updater.openRelease(url));
+
+  /* System media (status bar now-playing widget) */
+  handle('media:nowPlaying', () => media.nowPlaying());
+  handle('media:control', (action, position) => media.control(action, position));
 }
 
 module.exports = { registerIpc, DEBUG };

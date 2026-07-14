@@ -13,6 +13,7 @@ import './search.js';
 import './composer.js';
 import './sync.js';
 import './status.js';
+import './media.js';
 import './titlebar.js';
 import { applyUpdateResult } from './settings.js';
 import './onboarding.js';

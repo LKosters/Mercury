@@ -215,9 +215,10 @@ function deleteMessage(accountId, folder, uid) {
 
 // Account-wide totals for the status bar and sidebar badges.
 // `inboxUnread` is the full inbox unread count (shown on Complete Inbox);
-// `inboxVisibleUnread` excludes mail from reactive-hidden senders, so it
-// matches the filtered Inbox view. Pass the union of hide-from-inbox senders.
-function stats(accountId, hiddenSenders = []) {
+// `inboxVisibleUnread` excludes mail from reactive-hidden senders and mail
+// marked done, so it matches the filtered Inbox view. Pass the union of
+// hide-from-inbox senders and the account's done Message-IDs.
+function stats(accountId, hiddenSenders = [], doneMessageIds = []) {
   const d = init();
   const total = d
     .prepare('SELECT COUNT(*) AS c FROM messages WHERE account_id = ?')
@@ -226,15 +227,24 @@ function stats(accountId, hiddenSenders = []) {
     .prepare("SELECT COUNT(*) AS c FROM messages WHERE account_id = ? AND folder = 'INBOX' AND seen = 0")
     .get(accountId).c;
   let inboxVisibleUnread = inboxUnread;
-  if (hiddenSenders.length) {
-    const placeholders = hiddenSenders.map(() => '?').join(',');
+  if (hiddenSenders.length || doneMessageIds.length) {
+    const conditions = [];
+    const params = [accountId];
+    if (hiddenSenders.length) {
+      conditions.push(`from_address NOT IN (${hiddenSenders.map(() => '?').join(',')})`);
+      params.push(...hiddenSenders.map((s) => s.toLowerCase()));
+    }
+    if (doneMessageIds.length) {
+      conditions.push(`message_id NOT IN (${doneMessageIds.map(() => '?').join(',')})`);
+      params.push(...doneMessageIds);
+    }
     inboxVisibleUnread = d
       .prepare(
         `SELECT COUNT(*) AS c FROM messages
          WHERE account_id = ? AND folder = 'INBOX' AND seen = 0
-           AND from_address NOT IN (${placeholders})`
+           AND ${conditions.join(' AND ')}`
       )
-      .get(accountId, ...hiddenSenders.map((s) => s.toLowerCase())).c;
+      .get(...params).c;
   }
   return { total, inboxUnread, inboxVisibleUnread };
 }

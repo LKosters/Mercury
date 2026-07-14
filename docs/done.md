@@ -22,6 +22,11 @@ A per-message "done" checkmark: hovering a list row (or the reader's "Mark done"
 
 ## Change log
 
+### 2026-07-10 — fix: done mail excluded from the Inbox unread badge
+**Goal:** marking an email done removed it from the inbox list but not from the sidebar Inbox count (`stats.inboxVisibleUnread`), so the badge overcounted.
+**Changes:** `db.stats()` takes a third `doneMessageIds` param and adds `message_id NOT IN (...)` to the visible-unread query; the `mail:stats` IPC handler passes `done.list(accountId)` IDs; renderer `toggleDone` calls `updateStats()` so the badge refreshes immediately on check/uncheck.
+**Result:** Inbox badge matches the filtered Inbox view; Complete Inbox badge (`inboxUnread`) intentionally still counts done mail, since that view shows it.
+
 ### 2026-07-07 — Initial doc
 **Goal:** capture the done feature: inbox-zero workflow without touching the server.
 **Changes:** done store + IPC; hover check on rows; reader button; pinned Done pseudo-folder; inbox filtering; per-account scoping.

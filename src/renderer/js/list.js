@@ -226,6 +226,7 @@ async function loadMore() {
   marker.className = 'loading-hint';
   marker.textContent = 'Loading more…';
   $('message-list').appendChild(marker);
+  let loaded = false;
   try {
     const page = await fetchPage(state.listOffset);
     marker.remove();
@@ -235,12 +236,17 @@ async function loadMore() {
     state.messages = state.messages.concat(page.messages);
     state.baseMessages = state.messages;
     appendMessageRows(page.messages);
-    maybeFillViewport();
+    loaded = true;
   } catch (err) {
     marker.textContent = `Could not load more: ${err.message}`;
   } finally {
     loadingMore = false;
   }
+  // Re-check AFTER releasing the loadingMore flag — doing this inside the try
+  // block made the recursive loadMore() hit the re-entrancy guard, capping the
+  // auto-fill at one extra page. A heavily filtered inbox (hidden senders /
+  // done) could then never grow a scrollbar, leaving pagination unreachable.
+  if (loaded) maybeFillViewport();
 }
 
 // If filtering left the list shorter than the viewport, keep loading so the

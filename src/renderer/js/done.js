@@ -9,6 +9,7 @@ import { renderReader } from './reader.js';
 import { renderFolders } from './sidebar.js';
 import { renderReactive } from './reactive.js';
 import { clearSearch } from './search.js';
+import { updateStats } from './status.js';
 
 export function selectDone() {
   state.reactiveId = '__done__';
@@ -90,6 +91,7 @@ export async function toggleDone(item) {
       if (isInboxSelected()) loadMessages(); // un-done mail returns to the inbox
     }
     updateDoneButton();
+    updateStats(); // done set changed — refresh the Inbox badge
   } catch (err) {
     toast(err.message, 'error');
   }
